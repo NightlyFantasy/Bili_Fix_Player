@@ -1,79 +1,162 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Bili fix player : 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载;注意： 遇到无法播放问题请关闭脚本 " />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Bili fix player by NightlyFantasy</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
-    <title>Bili fix player</title>
   </head>
-
   <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/NightlyFantasy/Bili_Fix_Player">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/NightlyFantasy/Bili_Fix_Player/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/NightlyFantasy/Bili_Fix_Player/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/NightlyFantasy/Bili_Fix_Player">View on GitHub</a>
+    <div class="wrapper">
 
-          <h1 id="project_title">Bili fix player</h1>
-          <h2 id="project_tagline">修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载;注意： 遇到无法播放问题请关闭脚本 </h2>
+      <section>
+        <div id="title">
+          <h1>Bili fix player</h1>
+          <p>修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载;注意： 遇到无法播放问题请关闭脚本 </p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/NightlyFantasy">NightlyFantasy</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
+        </div>
 
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/NightlyFantasy/Bili_Fix_Player/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/NightlyFantasy/Bili_Fix_Player/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
+        <h1>
+<a name="%E8%84%9A%E6%9C%AC%E5%AE%89%E8%A3%85" class="anchor" href="#%E8%84%9A%E6%9C%AC%E5%AE%89%E8%A3%85"><span class="octicon octicon-link"></span></a><a href="https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js">脚本安装</a>
+</h1>
 
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+<p>脚本新手若观看下面教程无法理解如何安装，可以参考田生大神的教程</p>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<h4>
+<a name="%E8%84%9A%E6%9C%AC%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B" class="anchor" href="#%E8%84%9A%E6%9C%AC%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B"><span class="octicon octicon-link"></span></a><a href="https://tiansh.github.io/rbb/">脚本安装教程</a>
+</h4>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
+<h3>
+<a name="bili_fix_player%E4%BF%AE%E5%A4%8Db%E7%AB%99%E6%92%AD%E6%94%BE%E5%99%A8" class="anchor" href="#bili_fix_player%E4%BF%AE%E5%A4%8Db%E7%AB%99%E6%92%AD%E6%94%BE%E5%99%A8"><span class="octicon octicon-link"></span></a>Bili_Fix_Player|修复B站播放器</h3>
+
+<p>功能:修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载;注意： 遇到无法播放问题请关闭脚本 </p>
+
+<h3>
+<a name="uso%E5%B7%B2%E7%BB%8F%E6%8C%82%E4%BA%86%E9%A1%B9%E7%9B%AE%E6%89%98%E7%AE%A1%E4%BA%8Egithub%E6%BA%90%E7%A0%81%E5%9C%B0%E5%9D%80" class="anchor" href="#uso%E5%B7%B2%E7%BB%8F%E6%8C%82%E4%BA%86%E9%A1%B9%E7%9B%AE%E6%89%98%E7%AE%A1%E4%BA%8Egithub%E6%BA%90%E7%A0%81%E5%9C%B0%E5%9D%80"><span class="octicon octicon-link"></span></a>USO已经挂了，项目托管于github，源码地址</h3>
+
+<p>项目主页【安装地址界面】为</p>
+
+<h3>
+<a name="%E9%A1%B9%E7%9B%AE%E9%A1%B5%E9%9D%A2" class="anchor" href="#%E9%A1%B9%E7%9B%AE%E9%A1%B5%E9%9D%A2"><span class="octicon octicon-link"></span></a><a href="https://nightlyfantasy.github.io/Bili_Fix_Player/">项目页面</a>
+</h3>
+
+<p>脚本地址：</p>
+
+<h3>
+<a name="%E5%9C%B0%E5%9D%801%E6%8E%A8%E8%8D%90github%E5%AE%89%E8%A3%85" class="anchor" href="#%E5%9C%B0%E5%9D%801%E6%8E%A8%E8%8D%90github%E5%AE%89%E8%A3%85"><span class="octicon octicon-link"></span></a>地址1[推荐]：<a href="https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js">github安装</a>
+</h3>
+
+<p>地址2：<a href="https://greasyfork.org/scripts/740-bili-fix-player">greasyfork</a></p>
+
+<p>地址3[已经丢弃]：USO已经挂了，无法更新代码3.5.2，请使用下面的地址，顺便吐槽下USO，真是越来越垃圾)</p>
+
+<p>2014-06-03增强弹窗播放器，[拖动窗口标题可移动播放器，拖动右下角可改变播放器大小，设置后自动保存宽高和位置]</p>
+
+<p><img src="https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player_window.gif" alt="github" title="github"></p>
+
+<p>2014-05-25感谢吧友lzgptdgj提供BUG，在小型播放器下，屏蔽规则会无效的问题，已经修复</p>
+
+<p>2014-05-14增加首页弹窗播放，基本实现全站可弹窗（首页新番专题列表除外等）</p>
+
+<p><img src="http://bilili.ml/wp-content/uploads/2014/05/20140514093143.png" alt="github" title="github"></p>
+
+<p>脚本功能：</p>
+
+<p>1：提供高清画质和低品质画质视频下载，提供xml弹幕下载，可自由切换是否启用脚本和播放器大小</p>
+
+<p><img src="http://bilili.ml/wp-content/uploads/2014/05/QQ%E6%88%AA%E5%9B%BE20140513194058.png" alt="github" title="github"></p>
+
+<p>2：提供二级页面的弹窗播放效果，可以自由弹窗播放，如新番页面，MV页面和音乐页面（多P支持并显示当前播放P），乐视番弹窗即可破解</p>
+
+<p><img src="http://bilili.ml/wp-content/uploads/2014/05/QQ%E6%88%AA%E5%9B%BE20140513194604.png" alt="github" title="github"></p>
+
+<p>3：提供在搜索页面的多P（多P支持并显示当前播放P），搜索爱奇艺视频时，弹窗播放也无法破解，只能使用海外代理后弹窗，即可正常播放，博主有无弹幕爱奇艺解决方案，但是无弹幕估计没人想要，因此不集成；</p>
+
+<p><img src="http://bilili.ml/wp-content/uploads/2014/05/QQ%E6%88%AA%E5%9B%BE20140513194523.png" alt="github" title="github"></p>
+
+<h3>
+<a name="%E6%A6%82%E5%86%B5%E5%AE%89%E8%A3%85%E6%96%B9%E6%B3%95" class="anchor" href="#%E6%A6%82%E5%86%B5%E5%AE%89%E8%A3%85%E6%96%B9%E6%B3%95"><span class="octicon octicon-link"></span></a>概况安装方法：</h3>
+
+<p>1.火狐浏览器用户，在安装Greasemonkey扩展后安装该脚本即可使用</p>
+
+<p>2.chrome浏览器（包括chrome壳子的诸如360，猎豹，搜狗等等的极速模式）用户，在安装Tampermonkey扩展后安装该脚本即可使用；</p>
+
+<h3>
+<a name="%E8%AF%A6%E7%BB%86%E8%84%9A%E6%9C%AC%E7%9A%84%E5%AE%89%E8%A3%85" class="anchor" href="#%E8%AF%A6%E7%BB%86%E8%84%9A%E6%9C%AC%E7%9A%84%E5%AE%89%E8%A3%85"><span class="octicon octicon-link"></span></a>详细脚本的安装:</h3>
+
+<pre><code>    火狐浏览器{
+    1.在这个地址安装addons.mozilla.org/zh-CN/firefox/addon/greasemonkey安装这个扩展；
+    2.重启火狐；
+    3.在本页，点击install即可在B站使用
+    }
+    chrome(包括chrome壳的浏览器：包括chrome壳子的诸如360，猎豹，搜狗等等的极速模式){
+    1.在谷歌应用商店搜索安装Tampermonkey扩展，然后同上；
+    2.（chrome壳：包括chrome壳子的诸如360，猎豹，搜狗等等的极速模式）
+    在应用商店搜索安装Tampermonkey扩展，然后同上；
+    如果搜索不到，那么谷歌搜索Tampermonkey扩展，下载到本地，然后拖到扩展管理器安装扩展即可；
+    }
 </code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<h3>
+<a name="%E5%87%BA%E7%8E%B0%E6%97%A0%E6%B3%95%E6%92%AD%E6%94%BE%E6%83%85%E5%86%B5%E5%85%88%E5%85%B3%E9%97%AD%E8%87%AA%E5%8A%A8%E4%BF%AE%E5%A4%8D" class="anchor" href="#%E5%87%BA%E7%8E%B0%E6%97%A0%E6%B3%95%E6%92%AD%E6%94%BE%E6%83%85%E5%86%B5%E5%85%88%E5%85%B3%E9%97%AD%E8%87%AA%E5%8A%A8%E4%BF%AE%E5%A4%8D"><span class="octicon octicon-link"></span></a>出现无法播放情况先关闭自动修复</h3>
+
+<blockquote>
+<p>2013-12-14修复B站播放器无法在火狐魔镜弹窗播放</p>
+
+<p>2014-01-23替换优酷、爱奇艺、搜狐为B站播放器</p>
+
+<p>2014-03-28增加下载视频按钮
+2014-05-10收益于自己的B站追番计划(<a href="http://v.myacg.ga%E6%88%96%E8%80%85http://weiyun.jd-app.com)%EF%BC%8C%E4%BB%A3%E7%A0%81%E9%80%BB%E8%BE%91%E9%87%8D%E6%9E%84(%E4%B8%8D%E5%86%8D%E5%8C%BA%E5%88%86%E8%A7%86%E9%A2%91%E6%BA%90%E5%86%8D%E8%A7%A3%E6%9E%90%E8%A7%86%E9%A2%91%EF%BC%8C%E5%8D%B3%E6%98%AF%E6%9B%BF%E6%8D%A2%E6%89%80%E6%9C%89%E6%92%AD%E6%94%BE%E5%99%A8%E4%B8%BAB%E7%AB%99%E6%92%AD%E6%94%BE%E5%99%A8)%EF%BC%8C%E5%B9%B6%E9%87%8D%E5%86%99UI%EF%BC%88%E5%B0%86B%E7%AB%99%E9%A6%96%E9%A1%B5%E6%8C%89%E9%92%AE%E6%8D%A2%E6%88%90%E8%84%9A%E6%9C%AC%E6%8C%89%E9%92%AE%EF%BC%89%EF%BC%8C%E6%8F%90%E9%AB%98%E4%B8%8B%E8%BD%BD%E9%93%BE%E6%8E%A5%E7%B2%BE%E5%87%86%E5%BA%A6%EF%BC%8C%E5%A2%9E%E5%8A%A0%E6%92%AD%E6%94%BE%E5%99%A8%E5%A4%A7%E5%B0%8F%E9%80%89%E6%8B%A9">http://v.myacg.ga或者http://weiyun.jd-app.com)，代码逻辑重构(不再区分视频源再解析视频，即是替换所有播放器为B站播放器)，并重写UI（将B站首页按钮换成脚本按钮），提高下载链接精准度，增加播放器大小选择</a></p>
+
+<p>2014-05-10受诸多基佬要求，增加除首页外其他分类页面的弹窗播放(初衷是为了弹窗乐视源)</p>
+
+<p>2014-05-11还是基佬要求，增加弹窗播放器分P效果，增加弹幕下载功能，在吧友大神田生的建议下，正则表达式加强匹配</p>
+
+<p>2014-05-13增加搜索页面的弹窗播放，并且支持多P和显示当前P，增加模糊画质下载按钮，重写弹窗列表UI</p>
+</blockquote>
 
 <h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+<a name="------------%E4%BB%A5%E4%B8%8B%E4%BF%A1%E6%81%AF%E6%8F%90%E4%BE%9B%E7%BB%99%E5%BC%80%E5%8F%91%E8%80%85-----------" class="anchor" href="#------------%E4%BB%A5%E4%B8%8B%E4%BF%A1%E6%81%AF%E6%8F%90%E4%BE%9B%E7%BB%99%E5%BC%80%E5%8F%91%E8%80%85-----------"><span class="octicon octicon-link"></span></a>------------以下信息提供给开发者-----------</h3>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<blockquote>
+<p><a href="https://static-s.bilibili.tv/play.swf---%E6%96%B0%E7%89%88%E6%92%AD%E6%94%BE%E5%99%A8">https://static-s.bilibili.tv/play.swf---新版播放器</a></p>
 
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+<p><a href="http://static.hdslb.com/play.swf---%E6%97%A7%E7%89%88%E6%92%AD%E6%94%BE%E5%99%A8">http://static.hdslb.com/play.swf---旧版播放器</a></p>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<p><a href="https://static-s.bilibili.tv/play_old.swf---%E8%80%83%E5%8F%A4%E7%BA%A7%E5%88%AB%E6%92%AD%E6%94%BE%E5%99%A8">https://static-s.bilibili.tv/play_old.swf---考古级别播放器</a></p>
+</blockquote>
 
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<p>感谢各位大神和B站爱好者的支持，跑路搬砖走起</p>
 
 <h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
-
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<a name="bug%E5%8F%8D%E9%A6%88%E5%9C%B0%E5%9D%80" class="anchor" href="#bug%E5%8F%8D%E9%A6%88%E5%9C%B0%E5%9D%80"><span class="octicon octicon-link"></span></a><a href="http://bilili.ml/361.html">BUG反馈地址</a>
+</h3>
       </section>
-    </div>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Bili fix player maintained by <a href="https://github.com/NightlyFantasy">NightlyFantasy</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
-      </footer>
     </div>
-
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
     
-
   </body>
 </html>
