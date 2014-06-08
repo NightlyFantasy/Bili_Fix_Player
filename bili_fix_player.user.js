@@ -11,6 +11,7 @@
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @grant       GM_addStyle
+// @grant       unsafeWindow
 // @author     绯色
 // ==/UserScript==
 /**
@@ -146,8 +147,15 @@
 			}
 		});
 	}
-	//在新番页面，通过弹窗，获取aid,cid然后进行播放
 
+	function fix_player_fullwin() {
+		unsafeWindow.player_fullwin = function (is_full) {
+			$('#window-player').css({ 'position': is_full ? 'fixed' : 'static' });
+			$('.z, .header, .z_top, .footer').css({ 'display': is_full ? 'none' : 'block' });
+		}
+	};
+
+	//在新番页面，通过弹窗，获取aid,cid然后进行播放
 	function aid_build_player(aid) {
 		var url = 'http://api.bilibili.tv/view?type=json&appkey=0a99fa1d87fdd38c&batch=1&id=' + aid;
 		GM_xmlhttpRequest({
@@ -171,6 +179,7 @@
 						var p = parseInt(i) + 1;
 						$('#window_play_list').append('<li class="single_play_list" data-field="aid=' + aid + '&cid=' + cid + '"><a  href="javascript:void(0);" style="color:#00A6D8;" >' + p + 'P</a></li>');
 					}
+					if (!unsafeWindow.player_fullwin) setTimeout(fix_player_fullwin, 0);
 					//弹窗的分P播放
 					$('.single_play_list').click(
 						function() {
@@ -417,6 +426,21 @@
 					width:300px!important;\
 					background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");\
 					min-height:200px!Important;\
+					}\
+          #player_content {\
+					position:absolute;\
+					top:60px;\
+					left:10px;\
+					right:10px;\
+					bottom:10px;\
+          }\
+					#window-player {\
+					bottom: 0;\
+					height: 100%;\
+					left: 0;\
+					right: 0;\
+					top: 0;\
+					width: 100%;\
 					}';
 	GM_addStyle(css);
 
