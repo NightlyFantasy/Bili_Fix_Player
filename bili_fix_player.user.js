@@ -4,7 +4,7 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.tv\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.5.3
+// @version     3.5.4
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @grant       GM_xmlhttpRequest
@@ -15,6 +15,7 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
+2014-06-08修复小部分bug(样式冲突、弹窗冲突)
 2014-06-03增强弹窗播放器，[拖动窗口标题可移动播放器，拖动右下角可改变播放器大小，设置后自动保存宽高和位置]
 2014-05-25感谢吧友lzgptdgj提供BUG，在小型播放器下，屏蔽规则会无效的问题，已经修复
 2014-05-14增加首页弹窗播放，基本实现全站可弹窗（首页新番专题列表除外等）
@@ -60,19 +61,19 @@
 						</div></li>\
 						<li><a class="font" target="_blank" id="aid_down_av">模糊画质视频下载(单文件)</a></li>\
 						<li><a id="down_cid_xml" target="_blank">弹幕下载</a></li>\
-						<li><a>自动修复(修改后请刷新页面):<a id="bili_fix" class="btn">' + auto + '</a></a></li>\
-						<li><a class="font">播放器大小(小型在火狐弹窗无BUG):<a id="player_size" class="btn">' + player_size + '</a></a></li>\
+						<li><a>自动修复(修改后请刷新页面):<a id="bili_fix" class="bfpbtn">' + auto + '</a></a></li>\
+						<li><a class="font">播放器大小(小型在火狐弹窗无BUG):<a id="player_size" class="bfpbtn">' + player_size + '</a></a></li>\
 						<li><a id="bili_set_status">就绪中→_→</a></li>\
 						</ul>\
 						<span class="addnew_5">+10086</span>';
 		$('div.num:nth-child(4) > ul:nth-child(1) > li:nth-child(1)').html(div);
 
 		//监听修复按钮
-		var btn = document.querySelector("#bili_fix");
-		btn.addEventListener("click", set_auto, false);
+		var bfpbtn = document.querySelector("#bili_fix");
+		bfpbtn.addEventListener("click", set_auto, false);
 		//监听播放器大小按钮
-		var btn = document.querySelector("#player_size");
-		btn.addEventListener("click", set_player, false);
+		var bfpbtn = document.querySelector("#player_size");
+		bfpbtn.addEventListener("click", set_player, false);
 	}
 
 	//函数，插入下载按钮
@@ -89,7 +90,7 @@
 		var s = GM_getValue('auto') ? '已打开' : '已关闭';
 		document.getElementById('bili_fix').innerHTML = s;
 		$("#bili_fix").toggleClass("active");
-		$('#bili_set_status').html('<a class="btn notice font">已更改,刷新生效_(:3」∠)_</a>');
+		$('#bili_set_status').html('<a class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</a>');
 	}
 	//播放器大小按钮事件
 
@@ -98,7 +99,7 @@
 		var s = GM_getValue('player_size') ? '大型' : '小型';
 		document.getElementById('player_size').innerHTML = s;
 		$("#player_size").toggleClass("active");
-		$('#bili_set_status').html('<a class="btn active font">已更改,刷新生效_(:3」∠)_</a>');
+		$('#bili_set_status').html('<a class="bfpbtn active font">已更改,刷新生效_(:3」∠)_</a>');
 	}
 	/**
 -------------------------------函数 Model-------------------------------------
@@ -275,15 +276,15 @@
 				//$('.dialogcontainter').remove();//防止同时播放两个视频
 				$('#player-list').remove(); //移除播放列表
 				var a = '<p id="window_play_title">脚本(｀・ω・´)正在加载中</p><div id="player_content">脚本(｀・ω・´)播放器正在努力加载中....</div>';
-				var list_html = '<div id="player-list"><p style="font-weight:800;color:red;text-align:left">分P列表君(￣︶￣)↗</p><ul id="window_play_list"></ul></div>';
+				var list_html = '<div id="player-list"><div class="sort"><i>分P列表</i></div><ul id="window_play_list"></ul></div>';
 
 				var title = $(this).parent('.t').html() === null ? $(this).parent('.title').html() : $(this).parent('.t').html();
-				var title_html = title + '==>><span id="window_play_info"></span>';
+				var title_html = title + '&nbsp;&nbsp;&nbsp;▶<span id="window_play_info"></span>';
 				setTimeout(function() {
 					creat(title_html, a); //创建可视化窗口
 					$('.dialogcontainter').after(list_html);
 					$('#window_play_info').html('正在播放第<span style="color:#F0CF1D">1P</span>');
-					$('#window_play_title').html('<p><a id="div_positon_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #E54C7E;">固定播放器</a><a id="list_control_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #0CB3EE;">收缩分P列表</a>[拖动标题可移动播放器，拖动右下角可改变播放器大小，设置后自动保存宽高和位置]</p>');
+					$('#window_play_title').html('<p><a id="div_positon_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #E54C7E;">固定播放器</a><a id="list_control_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #0CB3EE;">收缩分P列表[在左边]</a>[拖动标题可移动播放器，拖动右下角可改变播放器大小，设置后自动保存宽高和位置]</p>');
 					//切换分P按钮
 					$('#list_control_button').click(function() {
 						var flag = $("#player-list").css("display");
@@ -336,16 +337,16 @@
 	api_get_cid(aid, page); //按照aid和分p获取cid并且替换播放器
 
 	//css插入
-	var css = '.btn{font-size: 12px;height: 25.6px;line-height: 25.6px;padding: 0px 2px;transition-property: #000, color;\
+	var css = '.bfpbtn{font-size: 12px;height: 25.6px;line-height: 25.6px;padding: 0px 2px;transition-property: #000, color;\
 					transition-duration: 0.3s;\
 					box-shadow: none;\
 					color: #FFF;\
 					text-shadow: none;\
 					border: medium none;\
 					background: none repeat scroll 0% 0% #00A1CB!important;}\
-					.btn.active{\
+					.bfpbtn.active{\
 					background: none repeat scroll 0% 0%  #F489AD!important;}\
-					.btn.notice{\
+					.bfpbtn.notice{\
 					background-color:#A300C0!important;}\
 					.font{\
 					font-size:11px!important;}\
@@ -597,7 +598,7 @@
 		Stop: function() {
 			removeListener(document, 'mousemove', this._fM);
 			removeListener(document, 'mouseup', this._fS);
-			console.log($('.dialogcontainter').width(), $('.dialogcontainter').height());
+			//console.log($('.dialogcontainter').width(), $('.dialogcontainter').height());
 			//实时改变播放器大小，保存播放器大小
 			$('#window-player').width($('.dialogcontainter').width() - 20);
 			GM_setValue('player_width', ($('.dialogcontainter').width() - 20));
@@ -616,6 +617,7 @@
 	})
 
 		function creat(title, content) {
+			$('.dialogcontainter').remove();
 			new Dialog({
 				Info: title = title,
 				Left: GM_getValue('div_left'),
