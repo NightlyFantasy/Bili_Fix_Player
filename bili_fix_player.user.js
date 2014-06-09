@@ -427,13 +427,13 @@
 					background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");\
 					min-height:200px!Important;\
 					}\
-          #player_content {\
+					#player_content {\
 					position:absolute;\
 					top:60px;\
 					left:10px;\
 					right:10px;\
 					bottom:10px;\
-          }\
+					}\
 					#window-player {\
 					bottom: 0;\
 					height: 100%;\
@@ -623,10 +623,8 @@
 			removeListener(document, 'mousemove', this._fM);
 			removeListener(document, 'mouseup', this._fS);
 			//console.log($('.dialogcontainter').width(), $('.dialogcontainter').height());
-			//实时改变播放器大小，保存播放器大小
-			$('#window-player').width($('.dialogcontainter').width() - 20);
+			//实时保存播放器大小
 			GM_setValue('player_width', ($('.dialogcontainter').width() - 20));
-			$('#window-player').height($('.dialogcontainter').height() - 70);
 			GM_setValue('player_height', ($('.dialogcontainter').height() - 70));
 			//保存位置
 			//GM_setValue('div_top', ($('.dialogcontainter').offset().top));//设置垂直位置的时候，如果是长页而且是浮动播放器时候记录位置，会导致播放器不知所踪
