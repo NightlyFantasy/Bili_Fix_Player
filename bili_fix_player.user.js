@@ -2,9 +2,9 @@
 // @name        bili_fix_player
 // @namespace   bili
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
-// @include     /^.*\.bilibili\.tv\/(video\/|search)?.*$/
+// @include     /^.*\.bilibili\.(tv|com|cn)\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.5.4
+// @version     3.5.5
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @grant       GM_xmlhttpRequest
@@ -15,6 +15,7 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
+2014-06-18修复B站更换域名的BUG，在田生大神的建议下，将所有api域名换成com，弹窗播放器增加收藏按钮
 2014-06-08修复小部分bug(样式冲突、弹窗冲突)
 2014-06-03增强弹窗播放器，[拖动窗口标题可移动播放器，拖动右下角可改变播放器大小，设置后自动保存宽高和位置]
 2014-05-25感谢吧友lzgptdgj提供BUG，在小型播放器下，屏蔽规则会无效的问题，已经修复
@@ -109,16 +110,16 @@
 	function Replace_player(aid, cid) {
 		if (GM_getValue('auto') == '1') {
 			if (GM_getValue('player_size') == '1') {
-				document.getElementById('bofqi').innerHTML = '<iframe class="player" src="https://secure.bilibili.tv/secure,cid=' + cid + '&amp;aid=' + aid + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="482" width="950"></iframe> ';
+				document.getElementById('bofqi').innerHTML = '<iframe class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="482" width="950"></iframe> ';
 			} else {
-				document.getElementById('bofqi').outerHTML = '<embed id="bofqi_embed" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.tv/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" height="482" width="950">';
+				document.getElementById('bofqi').outerHTML = '<embed id="bofqi_embed" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" height="482" width="950">';
 			}
 		}
 	}
 	//api获取cid
 
 	function api_get_cid(aid, page) {
-		var url = 'http://api.bilibili.tv/view?type=json&appkey=0a99fa1d87fdd38c&batch=1&id=' + aid;
+		var url = 'http://api.bilibili.com/view?type=json&appkey=0a99fa1d87fdd38c&batch=1&id=' + aid;
 		GM_xmlhttpRequest({
 			method: 'GET',
 			url: url,
@@ -134,7 +135,7 @@
 						var cid = lp.cid;
 						var type = lp.type;
 						insert_html(type); //UI
-						var cid_xml_url = 'http://comment.bilibili.tv/' + cid + '.xml';
+						var cid_xml_url = 'http://comment.bilibili.com/' + cid + '.xml';
 						$('#down_cid_xml').attr('href', cid_xml_url); //弹幕下载
 						Replace_player(aid, cid); //替换播放器 
 						cid_get_videodown_hd(cid); //获取高清下载链接
@@ -149,7 +150,7 @@
 	//在新番页面，通过弹窗，获取aid,cid然后进行播放
 
 	function aid_build_player(aid) {
-		var url = 'http://api.bilibili.tv/view?type=json&appkey=0a99fa1d87fdd38c&batch=1&id=' + aid;
+		var url = 'http://api.bilibili.com/view?type=json&appkey=0a99fa1d87fdd38c&batch=1&id=' + aid;
 		GM_xmlhttpRequest({
 			method: 'GET',
 			url: url,
@@ -194,12 +195,12 @@
 	function window_player(aid, cid) {
 		var width = GM_getValue('player_width');
 		var height = GM_getValue('player_height');
-		return '<embed id="window-player" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.tv/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" height="' + height + '" width="' + width + '">';
+		return '<embed id="window-player" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" height="' + height + '" width="' + width + '">';
 	}
 	//cid获取高清视频链接
 
 	function cid_get_videodown_hd(cid) {
-		var url = 'http://interface.bilibili.cn/playurl?appkey=0a99fa1d87fdd38c&platform=android&quality=2&cid=' + cid;
+		var url = 'http://interface.bilibili.com/playurl?appkey=0a99fa1d87fdd38c&platform=android&quality=2&cid=' + cid;
 		GM_xmlhttpRequest({
 			method: 'GET',
 			url: url,
@@ -220,7 +221,7 @@
 	//低画质视频下载（单文件）
 
 	function aid_down_av(aid, page) {
-		var url = 'http://www.bilibili.tv/m/html5?aid=' + aid + '&page=' + page;
+		var url = 'http://www.bilibili.com/m/html5?aid=' + aid + '&page=' + page;
 		GM_xmlhttpRequest({
 			method: 'GET',
 			url: url,
@@ -254,7 +255,7 @@
 		$('.result li .r a').each(
 			function() {
 				var href = $(this).attr('href');
-				var pattern = /http:\/\/www\.bilibili\.tv\/video\/av(\d+)\//ig;
+				var pattern = /http:\/\/www\.bilibili\.com\/video\/av(\d+)\//ig;
 				var content = pattern.exec(href);
 				var aid = content ? (content[1]) : '';
 				if (aid != '') {
@@ -279,7 +280,8 @@
 				var list_html = '<div id="player-list"><div class="sort"><i>分P列表</i></div><ul id="window_play_list"></ul></div>';
 
 				var title = $(this).parent('.t').html() === null ? $(this).parent('.title').html() : $(this).parent('.t').html();
-				var title_html = title + '&nbsp;&nbsp;&nbsp;▶<span id="window_play_info"></span>';
+				var aid = $(this).attr('data-field');
+				var title_html = '<a class="mark_my_video" href="javascript:void(0);" style="color:#006766;" data-field="' + aid + '">收藏★</a>&nbsp;&nbsp;&nbsp;<span style="color:#8C8983">' + title.replace('弹▶', '') + '</span>&nbsp;&nbsp;&nbsp;▶<span id="window_play_info"></span>';
 				setTimeout(function() {
 					creat(title_html, a); //创建可视化窗口
 					$('.dialogcontainter').after(list_html);
@@ -313,15 +315,32 @@
 							$('#div_positon_button').css('background', 'none repeat scroll 0% 0% #E54C7E');
 						}
 					});
+					//弹窗播放器收藏功能
+					$('.mark_my_video').click(function() {
+						var aid = $(this).attr('data-field');
+						$.ajax({
+							type: 'POST',
+							url: 'http://www.bilibili.com/m/stow',
+							data: 'dopost=save&aid=' + aid + '&stow_target=stow&ajax=1',
+							success: function(r) {
+								//$('#edit_status_bar').html(r);
+								alert('收藏成功');
+							},
+							error: function(r) {
+								alert('出错，请重试！');
+							},
+							dataType: 'text'
+						});
+					});
 				}, 0);
-
-				var aid = $(this).attr('data-field');
 				setTimeout(function() {
 					aid_build_player(aid);
 				}, 0);
 			});
 	}
 	//END弹窗------------------------------
+
+
 
 	//替换播放器----------------------------
 	//取出aid和分P
@@ -381,7 +400,7 @@
 					font-weight: 800!important;\
 					}\
 					.dialogcontainter{height:400px; width:400px; border:1px solid #14495f; position:fixed; font-size:13px;} \
-					.dialogtitle{height:26px; width:auto; background-color:#45A3CA;} \
+					.dialogtitle{height:26px; width:auto; background-color:#C6C6C6;} \
 					.dialogtitleinfo{float:left;height:20px; margin-top:2px; margin-left:10px;line-height:20px; vertical-align:middle; color:#FFFFFF; font-weight:bold; } \
 					.dialogtitleico{float:right; height:20px; width:21px; margin-top:2px; margin-right:5px;text-align:center; line-height:20px; vertical-align:middle; background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-21px 0px} \
 					.dialogbody{ padding:10px; width:auto; background-color: #FFFFFF;\
