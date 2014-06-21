@@ -4,7 +4,7 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.5.5
+// @version     3.5.5.1
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @grant       GM_xmlhttpRequest
@@ -15,6 +15,7 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
+2014-06-21修复搜索页面因为作者正则匹配错误（B站把域名换成com但在a标签还是tv域名，坑爹）的问题
 2014-06-18修复B站更换域名的BUG，在田生大神的建议下，将所有api域名换成com，弹窗播放器增加收藏按钮
 2014-06-08修复小部分bug(样式冲突、弹窗冲突)
 2014-06-03增强弹窗播放器，[拖动窗口标题可移动播放器，拖动右下角可改变播放器大小，设置后自动保存宽高和位置]
@@ -255,7 +256,7 @@
 		$('.result li .r a').each(
 			function() {
 				var href = $(this).attr('href');
-				var pattern = /http:\/\/www\.bilibili\.com\/video\/av(\d+)\//ig;
+				var pattern = /\/video\/av(\d+)\//ig;
 				var content = pattern.exec(href);
 				var aid = content ? (content[1]) : '';
 				if (aid != '') {
