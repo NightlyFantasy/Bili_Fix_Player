@@ -4,7 +4,7 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.5.5.1
+// @version     3.6
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @grant       GM_xmlhttpRequest
@@ -15,6 +15,8 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
+2014-06-30按照田生大神建议，增加与其脚本匹配id,在弹窗标题增加打开播放页面的按钮，补充，发现BUG，在弹窗播放时，点击B站FLASH播放器后，若直接点击关闭弹窗，会造成鼠标滚轮无效的问题，这BUG作者暂时无修复方法
+					并且使用了田生大神分支里面的弹窗播放器支持网页全屏功能，感谢
 2014-06-21修复搜索页面因为作者正则匹配错误（B站把域名换成com但在a标签还是tv域名，坑爹）的问题
 2014-06-18修复B站更换域名的BUG，在田生大神的建议下，将所有api域名换成com，弹窗播放器增加收藏按钮
 2014-06-08修复小部分bug(样式冲突、弹窗冲突)
@@ -55,7 +57,7 @@
 	function insert_html(type) {
 		var auto = GM_getValue('auto') ? '已打开' : '已关闭';
 		var player_size = GM_getValue('player_size') ? '大型' : '小型';
-		var div = '<a style="color:red">脚本(｀・ω・´)</a>\
+		var div = '<a style="color:red" id="bili-fix-player-installed">脚本(｀・ω・´)</a>\
 						<ul class="i_num" id="bili_fix_script">\
 						<li><a class="font">遇到播放错误请关闭自动修复后刷新页面</a><a target="_blank" href="http://bilili.ml/361.html">BUG反馈</a></li>\
 						<li><a>本页视频源:<b style="color:#F489AD">' + type + '</b></a></li>\
@@ -69,7 +71,6 @@
 						</ul>\
 						<span class="addnew_5">+10086</span>';
 		$('div.num:nth-child(4) > ul:nth-child(1) > li:nth-child(1)').html(div);
-
 		//监听修复按钮
 		var bfpbtn = document.querySelector("#bili_fix");
 		bfpbtn.addEventListener("click", set_auto, false);
@@ -148,8 +149,19 @@
 			}
 		});
 	}
-	//在新番页面，通过弹窗，获取aid,cid然后进行播放
 
+	//弹框播放器支持页面全屏 来自田生
+	function fix_player_fullwin() {
+		unsafeWindow.player_fullwin = function(is_full) {
+			$('#window-player').css({
+				'position': is_full ? 'fixed' : 'static'
+			});
+			$('.z, .header, .z_top, .footer').css({
+				'display': is_full ? 'none' : 'block'
+			});
+		}
+	};
+	//在新番页面，通过弹窗，获取aid,cid然后进行播放
 	function aid_build_player(aid) {
 		var url = 'http://api.bilibili.com/view?type=json&appkey=0a99fa1d87fdd38c&batch=1&id=' + aid;
 		GM_xmlhttpRequest({
@@ -173,6 +185,7 @@
 						var p = parseInt(i) + 1;
 						$('#window_play_list').append('<li class="single_play_list" data-field="aid=' + aid + '&cid=' + cid + '"><a  href="javascript:void(0);" style="color:#00A6D8;" >' + p + 'P</a></li>');
 					}
+					if (!unsafeWindow.player_fullwin) setTimeout(fix_player_fullwin, 0);
 					//弹窗的分P播放
 					$('.single_play_list').click(
 						function() {
@@ -282,7 +295,7 @@
 
 				var title = $(this).parent('.t').html() === null ? $(this).parent('.title').html() : $(this).parent('.t').html();
 				var aid = $(this).attr('data-field');
-				var title_html = '<a class="mark_my_video" href="javascript:void(0);" style="color:#006766;" data-field="' + aid + '">收藏★</a>&nbsp;&nbsp;&nbsp;<span style="color:#8C8983">' + title.replace('弹▶', '') + '</span>&nbsp;&nbsp;&nbsp;▶<span id="window_play_info"></span>';
+				var title_html = '<a class="mark_my_video" href="javascript:void(0);" style="color:#006766;" data-field="' + aid + '">收藏★</a>&nbsp;&nbsp;&nbsp;<a href="http://www.bilibili.com/video/av' + aid + '/" style="color:#D54851" target="_blank">打开播放页</a>&nbsp;&nbsp;&nbsp;<span style="color:#8C8983">' + title.replace('弹▶', '') + '</span>&nbsp;&nbsp;&nbsp;▶<span id="window_play_info"></span>';
 				setTimeout(function() {
 					creat(title_html, a); //创建可视化窗口
 					$('.dialogcontainter').after(list_html);
@@ -434,9 +447,29 @@
 					z-index:1000;\
 					left:10px;\
 					top:50px;\
-					width:300px!important;\
+					width:400px!important;\
 					background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");\
 					min-height:200px!Important;\
+					}\
+					#player_content {\
+					position:absolute;\
+					top:60px;\
+					left:10px;\
+					right:10px;\
+					bottom:10px;\
+					}\
+					#window-player {\
+					bottom: 0;\
+					height: 100%;\
+					left: 0;\
+					right: 0;\
+					top: 0;\
+					width: 100%;}\
+					a.single_player{\
+					display:none;\
+					}\
+					a:hover .single_player{\
+					display:inline;\
 					}';
 	GM_addStyle(css);
 
