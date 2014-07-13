@@ -4,7 +4,7 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.6
+// @version     3.6.1
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @grant       GM_xmlhttpRequest
@@ -15,6 +15,9 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
+2014-07-13你造吗？您可以使用一个海外的代理并将http://interface.bilibili.com/playurl?*作为代理规则加入到代理列表中j即可弹窗播放爱奇艺视频（来自田生大神）
+					修复弹窗播放时，点击B站FLASH播放器后，若直接点击关闭弹窗，会造成鼠标滚轮无效的问题
+					修复360浏览器在脚本设置的时候，被视频君挡住无法设置的问题，方案是（设置的时候先让视频君去火星，设置后再放回来）
 2014-06-30按照田生大神建议，增加与其脚本匹配id,在弹窗标题增加打开播放页面的按钮，补充，发现BUG，在弹窗播放时，点击B站FLASH播放器后，若直接点击关闭弹窗，会造成鼠标滚轮无效的问题，这BUG作者暂时无修复方法
 					并且使用了田生大神分支里面的弹窗播放器支持网页全屏功能，感谢
 2014-06-21修复搜索页面因为作者正则匹配错误（B站把域名换成com但在a标签还是tv域名，坑爹）的问题
@@ -41,6 +44,9 @@
 	//初始化 init
 	if (GM_getValue('auto') == undefined) GM_setValue('auto', 1);
 	if (GM_getValue('player_size') == undefined) GM_setValue('player_size', 1);
+	if (GM_getValue('pagebox_display')== undefined) GM_setValue('pagebox_display', 0);
+	//if (GM_getValue('player_container')== undefined) GM_setValue('player_container', 1);//弹窗播放器的标签容器（iframe/embed）已经完美解决
+	
 	//初始化播放器宽高
 	if (GM_getValue('player_width') == undefined) GM_setValue('player_width', 950);
 	if (GM_getValue('player_height') == undefined) GM_setValue('player_height', 482);
@@ -57,6 +63,8 @@
 	function insert_html(type) {
 		var auto = GM_getValue('auto') ? '已打开' : '已关闭';
 		var player_size = GM_getValue('player_size') ? '大型' : '小型';
+		var display=GM_getValue('pagebox_display') ? '悬浮' : '默认';
+		//var container=GM_getValue('player_container')?'iframe[无滚动条bug]':'embed[无拖放bug]';
 		var div = '<a style="color:red" id="bili-fix-player-installed">脚本(｀・ω・´)</a>\
 						<ul class="i_num" id="bili_fix_script">\
 						<li><a class="font">遇到播放错误请关闭自动修复后刷新页面</a><a target="_blank" href="http://bilili.ml/361.html">BUG反馈</a></li>\
@@ -67,16 +75,24 @@
 						<li><a id="down_cid_xml" target="_blank">弹幕下载</a></li>\
 						<li><a>自动修复(修改后请刷新页面):<a id="bili_fix" class="bfpbtn">' + auto + '</a></a></li>\
 						<li><a class="font">播放器大小(小型在火狐弹窗无BUG):<a id="player_size" class="bfpbtn">' + player_size + '</a></a></li>\
+						<li><a>评论区分页导航:<a id="pagebox-display" class="bfpbtn">' + display + '</a></a></li>\
 						<li><a id="bili_set_status">就绪中→_→</a></li>\
 						</ul>\
 						<span class="addnew_5">+10086</span>';
 		$('div.num:nth-child(4) > ul:nth-child(1) > li:nth-child(1)').html(div);
+		//<li><a>弹窗播放器的容器:<a id="player-container" class="bfpbtn">' + container + '</a></a></li>\
 		//监听修复按钮
 		var bfpbtn = document.querySelector("#bili_fix");
 		bfpbtn.addEventListener("click", set_auto, false);
 		//监听播放器大小按钮
 		var bfpbtn = document.querySelector("#player_size");
 		bfpbtn.addEventListener("click", set_player, false);
+		//监听评论分页功能显示切换
+		var bfpbtn = document.querySelector("#pagebox-display");
+		bfpbtn.addEventListener("click", change_pagebox_display, false);
+		//监听弹窗播放器的容器切换
+/* 		var bfpbtn = document.querySelector("#player-container");
+		bfpbtn.addEventListener("click", change_player_container, false);		 */
 	}
 
 	//函数，插入下载按钮
@@ -104,6 +120,25 @@
 		$("#player_size").toggleClass("active");
 		$('#bili_set_status').html('<a class="bfpbtn active font">已更改,刷新生效_(:3」∠)_</a>');
 	}
+	
+	//函数 评论分页功能显示切换（悬浮、原来位置）
+	function change_pagebox_display(){
+		GM_getValue('pagebox_display') ? GM_setValue('pagebox_display', 0) : GM_setValue('pagebox_display', 1);
+		var s = GM_getValue('pagebox_display') ? '悬浮' : '默认';
+		document.getElementById('pagebox-display').innerHTML = s;
+		$("#pagebox-display").toggleClass("active");
+		$('#bili_set_status').html('<a class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</a>');
+	}
+	
+	//函数 弹窗播放器的标签容器（iframe[无滚动条bug]/embed[无拖放bug]）
+/* 	function change_player_container(){
+		GM_getValue('player_container') ? GM_setValue('player_container', 0) : GM_setValue('player_container', 1);
+		var s = GM_getValue('player_container') ?'iframe[无滚动条bug]':'embed[无拖放bug]';
+		document.getElementById('player-container').innerHTML = s;
+		$("#player-container").toggleClass("active");
+		$('#bili_set_status').html('<a class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</a>');
+	} */
+	
 	/**
 -------------------------------函数 Model-------------------------------------
 */
@@ -112,7 +147,7 @@
 	function Replace_player(aid, cid) {
 		if (GM_getValue('auto') == '1') {
 			if (GM_getValue('player_size') == '1') {
-				document.getElementById('bofqi').innerHTML = '<iframe class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="482" width="950"></iframe> ';
+				document.getElementById('bofqi').innerHTML = '<iframe id="bofqi_embed" class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="482" width="950"></iframe> ';
 			} else {
 				document.getElementById('bofqi').outerHTML = '<embed id="bofqi_embed" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" height="482" width="950">';
 			}
@@ -137,6 +172,13 @@
 						var cid = lp.cid;
 						var type = lp.type;
 						insert_html(type); //UI
+						//修复360浏览器flash霸占脚本设置区域
+						$("#bili_fix_script,#bili-fix-player-installed").mouseover(function(){
+						$("#bofqi,bofqi_embed").addClass("hide");
+						});
+						$("#bili_fix_script,#bili-fix-player-installed").mouseout(function(){
+						$("#bofqi,bofqi_embed").removeClass("hide");
+						});
 						var cid_xml_url = 'http://comment.bilibili.com/' + cid + '.xml';
 						$('#down_cid_xml').attr('href', cid_xml_url); //弹幕下载
 						Replace_player(aid, cid); //替换播放器 
@@ -209,7 +251,11 @@
 	function window_player(aid, cid) {
 		var width = GM_getValue('player_width');
 		var height = GM_getValue('player_height');
+		if(GM_getValue('player_container') ==1){
+		return '<iframe  id="window-player" class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="' + height + '" width="' + width + '"></iframe> ';
+		}else{
 		return '<embed id="window-player" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" height="' + height + '" width="' + width + '">';
+		}
 	}
 	//cid获取高清视频链接
 
@@ -292,10 +338,10 @@
 				$('#player-list').remove(); //移除播放列表
 				var a = '<p id="window_play_title">脚本(｀・ω・´)正在加载中</p><div id="player_content">脚本(｀・ω・´)播放器正在努力加载中....</div>';
 				var list_html = '<div id="player-list"><div class="sort"><i>分P列表</i></div><ul id="window_play_list"></ul></div>';
-
+							
 				var title = $(this).parent('.t').html() === null ? $(this).parent('.title').html() : $(this).parent('.t').html();
 				var aid = $(this).attr('data-field');
-				var title_html = '<a class="mark_my_video" href="javascript:void(0);" style="color:#006766;" data-field="' + aid + '">收藏★</a>&nbsp;&nbsp;&nbsp;<a href="http://www.bilibili.com/video/av' + aid + '/" style="color:#D54851" target="_blank">打开播放页</a>&nbsp;&nbsp;&nbsp;<span style="color:#8C8983">' + title.replace('弹▶', '') + '</span>&nbsp;&nbsp;&nbsp;▶<span id="window_play_info"></span>';
+				var title_html = '<a class="mark_my_video" href="javascript:void(0);" style="color:#006766;" data-field="' + aid + '">收藏★</a>&nbsp;&nbsp;&nbsp;<a href="http://www.bilibili.com/video/av' + aid + '/" style="color:#D54851" target="_blank">打开播放页</a>&nbsp;&nbsp;&nbsp;<span style="color:#8C8983">' + title.replace('弹▶', '') + '</span>&nbsp;&nbsp;&nbsp;▶<span id="window_play_info"></span>';			
 				setTimeout(function() {
 					creat(title_html, a); //创建可视化窗口
 					$('.dialogcontainter').after(list_html);
@@ -354,8 +400,6 @@
 	}
 	//END弹窗------------------------------
 
-
-
 	//替换播放器----------------------------
 	//取出aid和分P
 	var url = document.location.href;
@@ -369,6 +413,17 @@
 	var content; //本脚本使用了很多content变量，其中cid_get_videodown函数的while循环content变量全局，如果此处未定义content，火狐会报权限问题
 	api_get_cid(aid, page); //按照aid和分p获取cid并且替换播放器
 
+	//当设置悬浮评论分页栏时，增加css
+	if (GM_getValue('pagebox_display') == 1) {
+		 var css='.pagelistbox{\
+		  position:fixed;\
+		  bottom:100px;  \
+		  right:0px;\
+		  background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");\
+		  } ';
+		 GM_addStyle(css);
+		}
+	
 	//css插入
 	var css = '.bfpbtn{font-size: 12px;height: 25.6px;line-height: 25.6px;padding: 0px 2px;transition-property: #000, color;\
 					transition-duration: 0.3s;\
@@ -470,8 +525,21 @@
 					}\
 					a:hover .single_player{\
 					display:inline;\
+					}\
+					#bofqi_embed.hide,#bofqi.hide,#player_content.hide{\
+					margin-left:3000px!important;\
+					transition:0.5s;\
+					-moz-transition:0.5s; /* Firefox 4 */\
+					-webkit-transition:0.5s; /* Safari 和 Chrome */\
+					-o-transition:0.5s; \
+					}\
+					#bofqi_embed,#bofqi,#player_content{\
+					transition:0.5s;\
+					-moz-transition:0.5s; /* Firefox 4 */\
+					-webkit-transition:0.5s; /* Safari 和 Chrome */\
+					-o-transition:0.5s; \
 					}';
-	GM_addStyle(css);
+						GM_addStyle(css);
 
 
 	//高大上的拖动DIV和改变DIV大小功能，来自互联网脚本之家www.jb51.net
@@ -636,8 +704,9 @@
 				e.preventDefault();
 				addListener(window, "blur", this._fS);
 			}
-			addListener(document, 'mousemove', this._fM)
-			addListener(document, 'mouseup', this._fS)
+			addListener(document, 'mousemove', this._fM);
+			addListener(document, 'mouseup', this._fS);
+			$("#player_content").addClass("hide");
 		},
 		Move: function(e) {
 			window.getSelection ? window.getSelection().removeAllRanges() : document.selection.empty();
@@ -649,9 +718,9 @@
 				this._body.style.height = Math.max(i_y - this.Titleheight, this.Minheight - this.Titleheight) - 2 * parseInt(CurrentStyle(this._body).paddingLeft) + 'px';
 		},
 		Stop: function() {
+			$("#player_content").removeClass("hide");
 			removeListener(document, 'mousemove', this._fM);
 			removeListener(document, 'mouseup', this._fS);
-			//console.log($('.dialogcontainter').width(), $('.dialogcontainter').height());
 			//实时改变播放器大小，保存播放器大小
 			$('#window-player').width($('.dialogcontainter').width() - 20);
 			GM_setValue('player_width', ($('.dialogcontainter').width() - 20));
