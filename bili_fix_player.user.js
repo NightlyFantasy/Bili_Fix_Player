@@ -4,7 +4,7 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.6.1
+// @version     3.6.2
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @grant       GM_xmlhttpRequest
@@ -46,7 +46,6 @@
 	if (GM_getValue('player_size') == undefined) GM_setValue('player_size', 1);
 	if (GM_getValue('pagebox_display')== undefined) GM_setValue('pagebox_display', 0);
 	//if (GM_getValue('player_container')== undefined) GM_setValue('player_container', 1);//弹窗播放器的标签容器（iframe/embed）已经完美解决
-	
 	//初始化播放器宽高
 	if (GM_getValue('player_width') == undefined) GM_setValue('player_width', 950);
 	if (GM_getValue('player_height') == undefined) GM_setValue('player_height', 482);
@@ -80,7 +79,6 @@
 						</ul>\
 						<span class="addnew_5">+10086</span>';
 		$('div.num:nth-child(4) > ul:nth-child(1) > li:nth-child(1)').html(div);
-		//<li><a>弹窗播放器的容器:<a id="player-container" class="bfpbtn">' + container + '</a></a></li>\
 		//监听修复按钮
 		var bfpbtn = document.querySelector("#bili_fix");
 		bfpbtn.addEventListener("click", set_auto, false);
@@ -90,9 +88,6 @@
 		//监听评论分页功能显示切换
 		var bfpbtn = document.querySelector("#pagebox-display");
 		bfpbtn.addEventListener("click", change_pagebox_display, false);
-		//监听弹窗播放器的容器切换
-/* 		var bfpbtn = document.querySelector("#player-container");
-		bfpbtn.addEventListener("click", change_player_container, false);		 */
 	}
 
 	//函数，插入下载按钮
@@ -129,16 +124,6 @@
 		$("#pagebox-display").toggleClass("active");
 		$('#bili_set_status').html('<a class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</a>');
 	}
-	
-	//函数 弹窗播放器的标签容器（iframe[无滚动条bug]/embed[无拖放bug]）
-/* 	function change_player_container(){
-		GM_getValue('player_container') ? GM_setValue('player_container', 0) : GM_setValue('player_container', 1);
-		var s = GM_getValue('player_container') ?'iframe[无滚动条bug]':'embed[无拖放bug]';
-		document.getElementById('player-container').innerHTML = s;
-		$("#player-container").toggleClass("active");
-		$('#bili_set_status').html('<a class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</a>');
-	} */
-	
 	/**
 -------------------------------函数 Model-------------------------------------
 */
@@ -251,11 +236,7 @@
 	function window_player(aid, cid) {
 		var width = GM_getValue('player_width');
 		var height = GM_getValue('player_height');
-		if(GM_getValue('player_container') ==1){
 		return '<iframe  id="window-player" class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="' + height + '" width="' + width + '"></iframe> ';
-		}else{
-		return '<embed id="window-player" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" height="' + height + '" width="' + width + '">';
-		}
 	}
 	//cid获取高清视频链接
 
@@ -415,137 +396,16 @@
 
 	//当设置悬浮评论分页栏时，增加css
 	if (GM_getValue('pagebox_display') == 1) {
-		 var css='.pagelistbox{\
-		  position:fixed;\
-		  bottom:100px;  \
-		  right:0px;\
-		  background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");\
-		  } ';
+		 var css='.pagelistbox{position:fixed;bottom:100px;  right:0px;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}';
 		 GM_addStyle(css);
 		}
 	
 	//css插入
-	var css = '.bfpbtn{font-size: 12px;height: 25.6px;line-height: 25.6px;padding: 0px 2px;transition-property: #000, color;\
-					transition-duration: 0.3s;\
-					box-shadow: none;\
-					color: #FFF;\
-					text-shadow: none;\
-					border: medium none;\
-					background: none repeat scroll 0% 0% #00A1CB!important;}\
-					.bfpbtn.active{\
-					background: none repeat scroll 0% 0%  #F489AD!important;}\
-					.bfpbtn.notice{\
-					background-color:#A300C0!important;}\
-					.font{\
-					font-size:11px!important;}\
-					#window_play_list li{\
-					float: left;\
-					position: relative;\
-					width: 5em;\
-					border: 1px solid #B0C4DE;\
-					font: 80% Verdana, Geneva, Arial, Helvetica, sans-serif;\
-					}\
-					.ui.corner.label {\
-					height: 0px;\
-					border-width: 0px 3em 3em 0px;\
-					border-style: solid;\
-					border-top: 0px solid transparent;\
-					border-bottom: 3em solid transparent;\
-					border-left: 0px solid transparent;\
-					border-right-color: rgb(217, 92, 92)!important;;\
-					transition: border-color 0.2s ease 0s;\
-					position: absolute;\
-					content: "";\
-					right: 0px;\
-					top: 0px;\
-					z-index: -1;\
-					width: 0px;\
-					}\
-					.ui.corner.label i{\
-					display: inline-block;\
-					margin:3px 0.25em 0px 17px;\
-					width: 1.23em;\
-					height: 1em;\
-					font-weight: 800!important;\
-					}\
-					.dialogcontainter{height:400px; width:400px; border:1px solid #14495f; position:fixed; font-size:13px;} \
-					.dialogtitle{height:26px; width:auto; background-color:#C6C6C6;} \
-					.dialogtitleinfo{float:left;height:20px; margin-top:2px; margin-left:10px;line-height:20px; vertical-align:middle; color:#FFFFFF; font-weight:bold; } \
-					.dialogtitleico{float:right; height:20px; width:21px; margin-top:2px; margin-right:5px;text-align:center; line-height:20px; vertical-align:middle; background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-21px 0px} \
-					.dialogbody{ padding:10px; width:auto; background-color: #FFFFFF;\
-					background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");} \
-					.dialogbottom{ \
-					bottom:1px; right:1px;cursor:nw-resize; \
-					position:absolute; \
-					background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif"); \
-					background-position:-42px -10px; \
-					width:10px; \
-					height:10px; \
-					font-size:0;}\
-					.button-small {\
-					font-size: 12px;\
-					height: 25.6px;\
-					line-height: 25.6px;\
-					padding: 0px 5px;\
-					}\
-					.button-flat-action {\
-					transition-duration: 0.3s;\
-					box-shadow: none;\
-					background: none repeat scroll 0% 0% #7DB500;\
-					color: #FFF!important;\
-					text-shadow: none;\
-					border: medium none;\
-					border-radius: 3px;\
-					}\
-					#player-list{\
-					position:fixed;\
-					z-index:1000;\
-					left:10px;\
-					top:50px;\
-					width:400px!important;\
-					background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");\
-					min-height:200px!Important;\
-					}\
-					#player_content {\
-					position:absolute;\
-					top:60px;\
-					left:10px;\
-					right:10px;\
-					bottom:10px;\
-					}\
-					#window-player {\
-					bottom: 0;\
-					height: 100%;\
-					left: 0;\
-					right: 0;\
-					top: 0;\
-					width: 100%;}\
-					a.single_player{\
-					display:none;\
-					}\
-					a:hover .single_player{\
-					display:inline;\
-					}\
-					#bofqi_embed.hide,#bofqi.hide,#player_content.hide{\
-					margin-left:3000px!important;\
-					transition:0.5s;\
-					-moz-transition:0.5s; /* Firefox 4 */\
-					-webkit-transition:0.5s; /* Safari 和 Chrome */\
-					-o-transition:0.5s; \
-					}\
-					#bofqi_embed,#bofqi,#player_content{\
-					transition:0.5s;\
-					-moz-transition:0.5s; /* Firefox 4 */\
-					-webkit-transition:0.5s; /* Safari 和 Chrome */\
-					-o-transition:0.5s; \
-					}';
-						GM_addStyle(css);
-
+	var css = '.bfpbtn{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 2px;transition-property:#000,color;transition-duration:0.3s;box-shadow:none;color:#FFF;text-shadow:none;border:medium none;background:none repeat scroll 0% 0% #00A1CB!important;}.bfpbtn.active{background:none repeat scroll 0% 0%  #F489AD!important;}.bfpbtn.notice{background-color:#A300C0!important;}.font{font-size:11px!important;}#window_play_list li{float:left;position:relative;width:5em;border:1px solid #B0C4DE;font:80% Verdana,Geneva,Arial,Helvetica,sans-serif;}.ui.corner.label{height:0px;border-width:0px 3em 3em 0px;border-style:solid;border-top:0px solid transparent;border-bottom:3em solid transparent;border-left:0px solid transparent;border-right-color:rgb(217,92,92)!important;transition:border-color 0.2s ease 0s;position:absolute;content:"";right:0px;top:0px;z-index:-1;width:0px;}.ui.corner.label i{display:inline-block;margin:3px 0.25em 0px 17px;width:1.23em;height:1em;font-weight:800!important;}.dialogcontainter{height:400px;width:400px;border:1px solid #14495f;position:fixed;font-size:13px;}.dialogtitle{height:26px;width:auto;background-color:#C6C6C6;}.dialogtitleinfo{float:left;height:20px;margin-top:2px;margin-left:10px;line-height:20px;vertical-align:middle;color:#FFFFFF;font-weight:bold;}.dialogtitleico{float:right;height:20px;width:21px;margin-top:2px;margin-right:5px;text-align:center;line-height:20px;vertical-align:middle;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-21px 0px}.dialogbody{padding:10px;width:auto;background-color:#FFFFFF;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}.dialogbottom{bottom:1px;right:1px;cursor:nw-resize;position:absolute;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-42px -10px;width:10px;height:10px;font-size:0;}.button-small{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 5px;}.button-flat-action{transition-duration:0.3s;box-shadow:none;background:none repeat scroll 0% 0% #7DB500;color:#FFF!important;text-shadow:none;border:medium none;border-radius:3px;}#player-list{position:fixed;z-index:1000;left:10px;top:50px;width:400px!important;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");min-height:200px!Important;}#player_content{position:absolute;top:60px;left:10px;right:10px;bottom:10px;}#window-player{bottom:0;height:100%;left:0;right:0;top:0;width:100%;}a.single_player{display:none;}a:hover .single_player{display:inline;}#bofqi_embed.hide,#bofqi.hide,#player_content.hide{margin-left:3000px!important;transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}#bofqi_embed,#bofqi,#player_content{transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}';
+	GM_addStyle(css);
 
 	//高大上的拖动DIV和改变DIV大小功能，来自互联网脚本之家www.jb51.net
-	var z = 1,
-		i = 1,
-		left = 10;
+	var z = 1,i = 1,left = 10;
 	var isIE = (document.all) ? true : false;
 	var Extend = function(destination, source) {
 		for (var property in source) {
