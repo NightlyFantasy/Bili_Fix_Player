@@ -4,7 +4,7 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.6.2
+// @version     3.6.3
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @grant       GM_xmlhttpRequest
@@ -15,6 +15,7 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
+2014-07-20修复小BUG，增加评论区移除和谐娘功能 当出现[此楼层已被用户隐藏 点击查看]时，自动展开
 2014-07-13你造吗？您可以使用一个海外的代理并将http://interface.bilibili.com/playurl?*作为代理规则加入到代理列表中j即可弹窗播放爱奇艺视频（来自田生大神）
 					修复弹窗播放时，点击B站FLASH播放器后，若直接点击关闭弹窗，会造成鼠标滚轮无效的问题
 					修复360浏览器在脚本设置的时候，被视频君挡住无法设置的问题，方案是（设置的时候先让视频君去火星，设置后再放回来）
@@ -45,6 +46,7 @@
 	if (GM_getValue('auto') == undefined) GM_setValue('auto', 1);
 	if (GM_getValue('player_size') == undefined) GM_setValue('player_size', 1);
 	if (GM_getValue('pagebox_display')== undefined) GM_setValue('pagebox_display', 0);
+	if (GM_getValue('pagebox_harm')== undefined) GM_setValue('pagebox_harm', 0);
 	//if (GM_getValue('player_container')== undefined) GM_setValue('player_container', 1);//弹窗播放器的标签容器（iframe/embed）已经完美解决
 	//初始化播放器宽高
 	if (GM_getValue('player_width') == undefined) GM_setValue('player_width', 950);
@@ -63,6 +65,7 @@
 		var auto = GM_getValue('auto') ? '已打开' : '已关闭';
 		var player_size = GM_getValue('player_size') ? '大型' : '小型';
 		var display=GM_getValue('pagebox_display') ? '悬浮' : '默认';
+		var harm=GM_getValue('pagebox_harm') ? '和谐娘打酱油中' : '默认[和谐娘和谐中]';
 		//var container=GM_getValue('player_container')?'iframe[无滚动条bug]':'embed[无拖放bug]';
 		var div = '<a style="color:red" id="bili-fix-player-installed">脚本(｀・ω・´)</a>\
 						<ul class="i_num" id="bili_fix_script">\
@@ -75,6 +78,7 @@
 						<li><a>自动修复(修改后请刷新页面):<a id="bili_fix" class="bfpbtn">' + auto + '</a></a></li>\
 						<li><a class="font">播放器大小(小型在火狐弹窗无BUG):<a id="player_size" class="bfpbtn">' + player_size + '</a></a></li>\
 						<li><a>评论区分页导航:<a id="pagebox-display" class="bfpbtn">' + display + '</a></a></li>\
+						<li><a>评论区和谐娘:<a id="pagebox-harm" class="bfpbtn">' + harm + '</a></a></li>\
 						<li><a id="bili_set_status">就绪中→_→</a></li>\
 						</ul>\
 						<span class="addnew_5">+10086</span>';
@@ -88,6 +92,9 @@
 		//监听评论分页功能显示切换
 		var bfpbtn = document.querySelector("#pagebox-display");
 		bfpbtn.addEventListener("click", change_pagebox_display, false);
+		//监听评论和谐娘功能切换
+		var bfpbtn = document.querySelector("#pagebox-harm");
+		bfpbtn.addEventListener("click", change_pagebox_harm, false);		
 	}
 
 	//函数，插入下载按钮
@@ -122,6 +129,15 @@
 		var s = GM_getValue('pagebox_display') ? '悬浮' : '默认';
 		document.getElementById('pagebox-display').innerHTML = s;
 		$("#pagebox-display").toggleClass("active");
+		$('#bili_set_status').html('<a class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</a>');
+	}
+	
+	//函数 评论和谐娘功能切换
+	function change_pagebox_harm(){
+		GM_getValue('pagebox_harm') ? GM_setValue('pagebox_harm', 0) : GM_setValue('pagebox_harm', 1);
+		var s = GM_getValue('pagebox_harm') ?  '和谐娘打酱油中' : '默认[和谐娘和谐中]';
+		document.getElementById('pagebox-harm').innerHTML = s;
+		$("#pagebox-harm").toggleClass("active");
 		$('#bili_set_status').html('<a class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</a>');
 	}
 	/**
@@ -396,9 +412,17 @@
 
 	//当设置悬浮评论分页栏时，增加css
 	if (GM_getValue('pagebox_display') == 1) {
-		 var css='.pagelistbox{position:fixed;bottom:100px;  right:0px;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}';
-		 GM_addStyle(css);
+	if(url.indexOf('video/av')>-1){
+		 var css='.pagelistbox{position:fixed;bottom:20px;  right:0px;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}';
+		 GM_addStyle(css);}
 		}
+		
+		//当设置评论移除和谐娘时，增加css
+	if (GM_getValue('pagebox_harm') == 1) {
+	if(url.indexOf('video/av')>-1){
+		 var css='.quote{display:block!important;}.content a{display:none!important;}';
+		 GM_addStyle(css);}
+		}	
 	
 	//css插入
 	var css = '.bfpbtn{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 2px;transition-property:#000,color;transition-duration:0.3s;box-shadow:none;color:#FFF;text-shadow:none;border:medium none;background:none repeat scroll 0% 0% #00A1CB!important;}.bfpbtn.active{background:none repeat scroll 0% 0%  #F489AD!important;}.bfpbtn.notice{background-color:#A300C0!important;}.font{font-size:11px!important;}#window_play_list li{float:left;position:relative;width:5em;border:1px solid #B0C4DE;font:80% Verdana,Geneva,Arial,Helvetica,sans-serif;}.ui.corner.label{height:0px;border-width:0px 3em 3em 0px;border-style:solid;border-top:0px solid transparent;border-bottom:3em solid transparent;border-left:0px solid transparent;border-right-color:rgb(217,92,92)!important;transition:border-color 0.2s ease 0s;position:absolute;content:"";right:0px;top:0px;z-index:-1;width:0px;}.ui.corner.label i{display:inline-block;margin:3px 0.25em 0px 17px;width:1.23em;height:1em;font-weight:800!important;}.dialogcontainter{height:400px;width:400px;border:1px solid #14495f;position:fixed;font-size:13px;}.dialogtitle{height:26px;width:auto;background-color:#C6C6C6;}.dialogtitleinfo{float:left;height:20px;margin-top:2px;margin-left:10px;line-height:20px;vertical-align:middle;color:#FFFFFF;font-weight:bold;}.dialogtitleico{float:right;height:20px;width:21px;margin-top:2px;margin-right:5px;text-align:center;line-height:20px;vertical-align:middle;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-21px 0px}.dialogbody{padding:10px;width:auto;background-color:#FFFFFF;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}.dialogbottom{bottom:1px;right:1px;cursor:nw-resize;position:absolute;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-42px -10px;width:10px;height:10px;font-size:0;}.button-small{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 5px;}.button-flat-action{transition-duration:0.3s;box-shadow:none;background:none repeat scroll 0% 0% #7DB500;color:#FFF!important;text-shadow:none;border:medium none;border-radius:3px;}#player-list{position:fixed;z-index:1000;left:10px;top:50px;width:400px!important;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");min-height:200px!Important;}#player_content{position:absolute;top:60px;left:10px;right:10px;bottom:10px;}#window-player{bottom:0;height:100%;left:0;right:0;top:0;width:100%;}a.single_player{display:none;}a:hover .single_player{display:inline;}#bofqi_embed.hide,#bofqi.hide,#player_content.hide{margin-left:3000px!important;transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}#bofqi_embed,#bofqi,#player_content{transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}';
