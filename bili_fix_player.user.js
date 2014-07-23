@@ -4,7 +4,7 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.6.3
+// @version     3.6.4
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @grant       GM_xmlhttpRequest
@@ -15,7 +15,8 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
-2014-07-20修复小BUG，增加评论区移除和谐娘功能 当出现[此楼层已被用户隐藏 点击查看]时，自动展开
+2014-07-23修复多数BUG
+2014-07-20修复小BUG，增加评论区移除和谐娘功能 当出现[此楼层已被用户隐藏 点击查看]时，自动展开，需要到脚本设置页面设置
 2014-07-13你造吗？您可以使用一个海外的代理并将http://interface.bilibili.com/playurl?*作为代理规则加入到代理列表中j即可弹窗播放爱奇艺视频（来自田生大神）
 					修复弹窗播放时，点击B站FLASH播放器后，若直接点击关闭弹窗，会造成鼠标滚轮无效的问题
 					修复360浏览器在脚本设置的时候，被视频君挡住无法设置的问题，方案是（设置的时候先让视频君去火星，设置后再放回来）
@@ -148,9 +149,10 @@
 	function Replace_player(aid, cid) {
 		if (GM_getValue('auto') == '1') {
 			if (GM_getValue('player_size') == '1') {
-				document.getElementById('bofqi').innerHTML = '<iframe id="bofqi_embed" class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="482" width="950"></iframe> ';
+				document.getElementById('bofqi').innerHTML = '<iframe class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="482" width="950"></iframe><img src="https://secure.bilibili.com/images/grey.gif" id="img_ErrCheck" style="display:none"><script type="text/javascript" src="http://static.hdslb.com/js/page.player_error.js"></script> ';
 			} else {
-				document.getElementById('bofqi').outerHTML = '<embed id="bofqi_embed" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" height="482" width="950">';
+				document.getElementById('bofqi').innerHTML = '<embed id="bofqi_embed" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" style="width:100%;height:100%">';
+				$('#bofqi').css({width:"960px",height:"520px"});
 			}
 		}
 	}
@@ -175,10 +177,10 @@
 						insert_html(type); //UI
 						//修复360浏览器flash霸占脚本设置区域
 						$("#bili_fix_script,#bili-fix-player-installed").mouseover(function(){
-						$("#bofqi,bofqi_embed").addClass("hide");
+						$("#bofqi,#bofqi_embed").addClass("hide");
 						});
 						$("#bili_fix_script,#bili-fix-player-installed").mouseout(function(){
-						$("#bofqi,bofqi_embed").removeClass("hide");
+						$("#bofqi,#bofqi_embed").removeClass("hide");
 						});
 						var cid_xml_url = 'http://comment.bilibili.com/' + cid + '.xml';
 						$('#down_cid_xml').attr('href', cid_xml_url); //弹幕下载
@@ -196,7 +198,7 @@
 	//弹框播放器支持页面全屏 来自田生
 	function fix_player_fullwin() {
 		unsafeWindow.player_fullwin = function(is_full) {
-			$('#window-player').css({
+			$('#window-player,#bofqi,#bofqi_embed').css({
 				'position': is_full ? 'fixed' : 'static'
 			});
 			$('.z, .header, .z_top, .footer').css({
@@ -252,7 +254,7 @@
 	function window_player(aid, cid) {
 		var width = GM_getValue('player_width');
 		var height = GM_getValue('player_height');
-		return '<iframe  id="window-player" class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="' + height + '" width="' + width + '"></iframe> ';
+		return '<embed id="window-player" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" height="' + height + '" width="' + width + '">';
 	}
 	//cid获取高清视频链接
 
@@ -397,6 +399,8 @@
 	}
 	//END弹窗------------------------------
 
+
+
 	//替换播放器----------------------------
 	//取出aid和分P
 	var url = document.location.href;
@@ -409,24 +413,25 @@
 	//播放器的html
 	var content; //本脚本使用了很多content变量，其中cid_get_videodown函数的while循环content变量全局，如果此处未定义content，火狐会报权限问题
 	api_get_cid(aid, page); //按照aid和分p获取cid并且替换播放器
-
+	
 	//当设置悬浮评论分页栏时，增加css
 	if (GM_getValue('pagebox_display') == 1) {
 	if(url.indexOf('video/av')>-1){
-		 var css='.pagelistbox{position:fixed;bottom:20px;  right:0px;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}';
+		 var css='.pagelistbox{position:fixed;top:150px;  right:0px;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}';
 		 GM_addStyle(css);}
 		}
 		
 		//当设置评论移除和谐娘时，增加css
 	if (GM_getValue('pagebox_harm') == 1) {
 	if(url.indexOf('video/av')>-1){
-		 var css='.quote{display:block!important;}.content a{display:none!important;}';
+		 var css='.quote{display:block!important;}span.content a,.content>a[href="javascript:;"]{display:none!important;}';
 		 GM_addStyle(css);}
 		}	
 	
 	//css插入
 	var css = '.bfpbtn{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 2px;transition-property:#000,color;transition-duration:0.3s;box-shadow:none;color:#FFF;text-shadow:none;border:medium none;background:none repeat scroll 0% 0% #00A1CB!important;}.bfpbtn.active{background:none repeat scroll 0% 0%  #F489AD!important;}.bfpbtn.notice{background-color:#A300C0!important;}.font{font-size:11px!important;}#window_play_list li{float:left;position:relative;width:5em;border:1px solid #B0C4DE;font:80% Verdana,Geneva,Arial,Helvetica,sans-serif;}.ui.corner.label{height:0px;border-width:0px 3em 3em 0px;border-style:solid;border-top:0px solid transparent;border-bottom:3em solid transparent;border-left:0px solid transparent;border-right-color:rgb(217,92,92)!important;transition:border-color 0.2s ease 0s;position:absolute;content:"";right:0px;top:0px;z-index:-1;width:0px;}.ui.corner.label i{display:inline-block;margin:3px 0.25em 0px 17px;width:1.23em;height:1em;font-weight:800!important;}.dialogcontainter{height:400px;width:400px;border:1px solid #14495f;position:fixed;font-size:13px;}.dialogtitle{height:26px;width:auto;background-color:#C6C6C6;}.dialogtitleinfo{float:left;height:20px;margin-top:2px;margin-left:10px;line-height:20px;vertical-align:middle;color:#FFFFFF;font-weight:bold;}.dialogtitleico{float:right;height:20px;width:21px;margin-top:2px;margin-right:5px;text-align:center;line-height:20px;vertical-align:middle;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-21px 0px}.dialogbody{padding:10px;width:auto;background-color:#FFFFFF;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}.dialogbottom{bottom:1px;right:1px;cursor:nw-resize;position:absolute;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-42px -10px;width:10px;height:10px;font-size:0;}.button-small{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 5px;}.button-flat-action{transition-duration:0.3s;box-shadow:none;background:none repeat scroll 0% 0% #7DB500;color:#FFF!important;text-shadow:none;border:medium none;border-radius:3px;}#player-list{position:fixed;z-index:1000;left:10px;top:50px;width:400px!important;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");min-height:200px!Important;}#player_content{position:absolute;top:60px;left:10px;right:10px;bottom:10px;}#window-player{bottom:0;height:100%;left:0;right:0;top:0;width:100%;}a.single_player{display:none;}a:hover .single_player{display:inline;}#bofqi_embed.hide,#bofqi.hide,#player_content.hide{margin-left:3000px!important;transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}#bofqi_embed,#bofqi,#player_content{transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}';
 	GM_addStyle(css);
+
 
 	//高大上的拖动DIV和改变DIV大小功能，来自互联网脚本之家www.jb51.net
 	var z = 1,i = 1,left = 10;
