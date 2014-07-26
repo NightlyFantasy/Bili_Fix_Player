@@ -4,7 +4,7 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.6.4
+// @version     3.6.4.1
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @grant       GM_xmlhttpRequest
@@ -15,6 +15,7 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
+2014-07-26弹窗因为本人技术问题无法完美解决，使用embed标签替换，可以网页全屏，但是关闭弹窗后会导致鼠标滚轮无效使用iframe标签无滚轮bug，但是因为跨域了，导致无法网页全屏
 2014-07-23修复多数BUG
 2014-07-20修复小BUG，增加评论区移除和谐娘功能 当出现[此楼层已被用户隐藏 点击查看]时，自动展开，需要到脚本设置页面设置
 2014-07-13你造吗？您可以使用一个海外的代理并将http://interface.bilibili.com/playurl?*作为代理规则加入到代理列表中j即可弹窗播放爱奇艺视频（来自田生大神）
@@ -243,7 +244,7 @@
 							// console.log(aid,cid);
 							setTimeout(function() {
 								$('#player_content').html(window_player(aid, cid));
-							});
+							},0);
 						});
 				}
 			}
@@ -254,7 +255,8 @@
 	function window_player(aid, cid) {
 		var width = GM_getValue('player_width');
 		var height = GM_getValue('player_height');
-		return '<embed id="window-player" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" height="' + height + '" width="' + width + '">';
+		//return '<embed id="window-player" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" height="' + height + '" width="' + width + '">';//使用embed标签替换，可以网页全屏，但是关闭弹窗后会导致鼠标滚轮无效
+		return '<iframe  id="window-player" class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="' + height + '" width="' + width + '"></iframe> ';//使用iframe标签无滚轮bug，但是因为跨域了，导致无法网页全屏
 	}
 	//cid获取高清视频链接
 
