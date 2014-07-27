@@ -7,6 +7,7 @@
 // @version     3.6.4.1
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
+// @require     http://static.hdslb.com/js/jquery.min.js
 // @grant       GM_xmlhttpRequest
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -56,8 +57,6 @@
 	//初始化播放器外框位置
 	//if (GM_getValue('div_top') == undefined) GM_setValue('div_top', 100);//设置垂直位置的时候，如果是长页而且是浮动播放器时候记录位置，会导致播放器不知所踪
 	if (GM_getValue('div_left') == undefined) GM_setValue('div_left', 100);
-	//初始化jquery支持
-	var $ = unsafeWindow.$;
 	/**
 -------------------------------用户界面GUI View-------------------------------------
 */
@@ -198,14 +197,32 @@
 
 	//弹框播放器支持页面全屏 来自田生
 	function fix_player_fullwin() {
-		unsafeWindow.player_fullwin = function(is_full) {
-			$('#window-player,#bofqi,#bofqi_embed').css({
-				'position': is_full ? 'fixed' : 'static'
-			});
-			$('.z, .header, .z_top, .footer').css({
-				'display': is_full ? 'none' : 'block'
-			});
-		}
+	  setTimeout(function () {
+	    // 代码来自 http://static.hdslb.com/js/page.arc.js 为了兼容性目的添加了 .tv 相关域名
+	    location.href = ['javascript: void(function () {var c;',
+        'window.postMessage?(c=function(a){"https://secure.bilibili.com"!=a.origin',
+            '&&"https://secure.bilibili.tv"!=a.origin&&"https://ssl.bilibili.com"!=a.origin',
+            '&&"https://ssl.bilibili.tv"!=a.origin||"secJS:"!=a.data.substr(0,6)',
+            '||eval(a.data.substr(6));',
+          '"undefined"!=typeof console&&console.log(a.origin+": "+a.data)},',
+          'window.addEventListener?window.addEventListener("message",c,!1):',
+          'window.attachEvent&&window.attachEvent("onmessage",c)):',
+        'setInterval(function(){if(evalCode=__GetCookie("__secureJS"))',
+        '{__SetCookie("__secureJS",""),eval(evalCode)}},1000);',
+      '}());'].join('');
+	  }, 0);
+	  setTimeout(function () {
+	    location.href = 'javascript:void(' + function () {
+	      player_fullwin = function (is_full) {
+	        $('#window-player,#bofqi,#bofqi_embed').css({
+	          'position': is_full ? 'fixed' : 'static'
+	        });
+	        $('.z, .header, .z_top, .footer').css({
+	          'display': is_full ? 'none' : 'block'
+	        });
+	      }
+	    } + '());';
+	  }, 0);
 	};
 	//在新番页面，通过弹窗，获取aid,cid然后进行播放
 	function aid_build_player(aid) {
