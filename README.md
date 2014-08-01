@@ -1,7 +1,6 @@
 #[点我快速安装脚本](https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js)
 
-脚本新手若观看下面教程无法理解如何安装，可以参考田生大神的教程
-####[脚本安装教程](https://tiansh.github.io/rbb/)
+脚本新手若观看下面教程无法理解如何安装，可以火狐吧发帖或者博客留言
 
 ### Bili_Fix_Player|修复B站播放器
 

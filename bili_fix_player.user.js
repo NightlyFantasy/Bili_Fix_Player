@@ -4,17 +4,20 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.6.4.1
+// @version     3.6.5
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
+// @require http://static.hdslb.com/js/jquery.min.js
 // @grant       GM_xmlhttpRequest
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @grant       GM_addStyle
+// @grant       unsafeWindow
 // @author     绯色
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
+2014-08-01弹窗网页全屏在田生大神帮助下完美解决（chrome无解），同时博主修复视频播放页面的网页全屏
 2014-07-26弹窗因为本人技术问题无法完美解决，使用embed标签替换，可以网页全屏，但是关闭弹窗后会导致鼠标滚轮无效使用iframe标签无滚轮bug，但是因为跨域了，导致无法网页全屏
 2014-07-23修复多数BUG
 2014-07-20修复小BUG，增加评论区移除和谐娘功能 当出现[此楼层已被用户隐藏 点击查看]时，自动展开，需要到脚本设置页面设置
@@ -57,7 +60,7 @@
 	//if (GM_getValue('div_top') == undefined) GM_setValue('div_top', 100);//设置垂直位置的时候，如果是长页而且是浮动播放器时候记录位置，会导致播放器不知所踪
 	if (GM_getValue('div_left') == undefined) GM_setValue('div_left', 100);
 	//初始化jquery支持
-	var $ = unsafeWindow.$;
+	//var $ = unsafeWindow.$;
 	/**
 -------------------------------用户界面GUI View-------------------------------------
 */
@@ -149,8 +152,10 @@
 
 	function Replace_player(aid, cid) {
 		if (GM_getValue('auto') == '1') {
+
 			if (GM_getValue('player_size') == '1') {
-				document.getElementById('bofqi').innerHTML = '<iframe class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="482" width="950"></iframe><img src="https://secure.bilibili.com/images/grey.gif" id="img_ErrCheck" style="display:none"><script type="text/javascript" src="http://static.hdslb.com/js/page.player_error.js"></script> ';
+				document.getElementById('bofqi').innerHTML = '<embed id="bofqi_embed" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window">';
+				//document.getElementById('bofqi').innerHTML = '<iframe class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="482" width="950"></iframe><img src="https://secure.bilibili.com/images/grey.gif" id="img_ErrCheck" style="display:none"><script type="text/javascript" src="http://static.hdslb.com/js/page.player_error.js"></script> ';
 			} else {
 				document.getElementById('bofqi').innerHTML = '<embed id="bofqi_embed" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" style="width:100%;height:100%">';
 				$('#bofqi').css({width:"960px",height:"520px"});
@@ -196,16 +201,34 @@
 		});
 	}
 
-	//弹框播放器支持页面全屏 来自田生
+	//播放器支持页面全屏 来自田生
 	function fix_player_fullwin() {
-		unsafeWindow.player_fullwin = function(is_full) {
-			$('#window-player,#bofqi,#bofqi_embed').css({
-				'position': is_full ? 'fixed' : 'static'
-			});
-			$('.z, .header, .z_top, .footer').css({
-				'display': is_full ? 'none' : 'block'
-			});
+		setTimeout(function () {
+		// 代码来自 http://static.hdslb.com/js/page.arc.js 为了兼容性目的添加了 .tv 相关域名
+		location.href = ['javascript: void(function () {var c;',
+		'window.postMessage?(c=function(a){"https://secure.bilibili.com"!=a.origin',
+		'&&"https://secure.bilibili.tv"!=a.origin&&"https://ssl.bilibili.com"!=a.origin',
+		'&&"https://ssl.bilibili.tv"!=a.origin||"secJS:"!=a.data.substr(0,6)',
+		'||eval(a.data.substr(6));',
+		'"undefined"!=typeof console&&console.log(a.origin+": "+a.data)},',
+		'window.addEventListener?window.addEventListener("message",c,!1):',
+		'window.attachEvent&&window.attachEvent("onmessage",c)):',
+		'setInterval(function(){if(evalCode=__GetCookie("__secureJS"))',
+		'{__SetCookie("__secureJS",""),eval(evalCode)}},1000);',
+		'}());'].join('');
+		}, 0);
+		setTimeout(function () {
+		location.href = 'javascript:void(' + function () {
+		player_fullwin = function (is_full) {
+		$('#window-player,#bofqi,#bofqi_embed').css({
+		'position': is_full ? 'fixed' : 'static'
+		});
+		$('.z, .header, .z_top, .footer').css({
+		'display': is_full ? 'none' : 'block'
+		});
 		}
+		} + '());';
+		}, 0); 
 	};
 	//在新番页面，通过弹窗，获取aid,cid然后进行播放
 	function aid_build_player(aid) {
@@ -255,8 +278,7 @@
 	function window_player(aid, cid) {
 		var width = GM_getValue('player_width');
 		var height = GM_getValue('player_height');
-		//return '<embed id="window-player" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" height="' + height + '" width="' + width + '">';//使用embed标签替换，可以网页全屏，但是关闭弹窗后会导致鼠标滚轮无效
-		return '<iframe  id="window-player" class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="' + height + '" width="' + width + '"></iframe> ';//使用iframe标签无滚轮bug，但是因为跨域了，导致无法网页全屏
+		return '<iframe  id="window-player" class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="' + height + '" width="' + width + '"></iframe> ';//
 	}
 	//cid获取高清视频链接
 
