@@ -4,7 +4,7 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.6.5
+// @version     3.6.6
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @require http://static.hdslb.com/js/jquery.min.js
@@ -17,6 +17,7 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
+2014-08-15增加专题弹窗，移除对所有播放器都采用打开菜单时将视频移开的功能，需要360浏览器用户自己设置打开此功能
 2014-08-01弹窗网页全屏在田生大神帮助下完美解决（chrome无解），同时博主修复视频播放页面的网页全屏
 2014-07-26弹窗因为本人技术问题无法完美解决，使用embed标签替换，可以网页全屏，但是关闭弹窗后会导致鼠标滚轮无效使用iframe标签无滚轮bug，但是因为跨域了，导致无法网页全屏
 2014-07-23修复多数BUG
@@ -52,6 +53,7 @@
 	if (GM_getValue('player_size') == undefined) GM_setValue('player_size', 1);
 	if (GM_getValue('pagebox_display')== undefined) GM_setValue('pagebox_display', 0);
 	if (GM_getValue('pagebox_harm')== undefined) GM_setValue('pagebox_harm', 0);
+	if (GM_getValue('init360')== undefined) GM_setValue('init360', 0);
 	//if (GM_getValue('player_container')== undefined) GM_setValue('player_container', 1);//弹窗播放器的标签容器（iframe/embed）已经完美解决
 	//初始化播放器宽高
 	if (GM_getValue('player_width') == undefined) GM_setValue('player_width', 950);
@@ -71,10 +73,12 @@
 		var player_size = GM_getValue('player_size') ? '大型' : '小型';
 		var display=GM_getValue('pagebox_display') ? '悬浮' : '默认';
 		var harm=GM_getValue('pagebox_harm') ? '和谐娘打酱油中' : '默认[和谐娘和谐中]';
+		var init360=GM_getValue('init360') ? '已打开' : '已关闭';
 		//var container=GM_getValue('player_container')?'iframe[无滚动条bug]':'embed[无拖放bug]';
 		var div = '<a style="color:red" id="bili-fix-player-installed">脚本(｀・ω・´)</a>\
 						<ul class="i_num" id="bili_fix_script">\
-						<li><a class="font">遇到播放错误请关闭自动修复后刷新页面</a><a target="_blank" href="http://bilili.ml/361.html">BUG反馈</a></li>\
+						<li>360浏览器兼容[非360勿开]:<a id="init360" class="bfpbtn">' + init360 + '</a></li>\
+						<li><a class="font">若无限小电视则尝试关闭修复</a><a target="_blank" href="http://bilili.ml/361.html">BUG反馈</a></li>\
 						<li><a>本页视频源:<b style="color:#F489AD">' + type + '</b></a></li>\
 						<li><a class="font">高清视频下载HD(右键复制以下视频分段下载链接，然后在新标签粘贴打开即可不被403)</a><div class="m_num" id="av_source">\
 						</div></li>\
@@ -100,6 +104,9 @@
 		//监听评论和谐娘功能切换
 		var bfpbtn = document.querySelector("#pagebox-harm");
 		bfpbtn.addEventListener("click", change_pagebox_harm, false);		
+		//360火星
+		var bfpbtn = document.querySelector("#init360");
+		bfpbtn.addEventListener("click", init_the_special, false);	
 	}
 
 	//函数，插入下载按钮
@@ -145,6 +152,14 @@
 		$("#pagebox-harm").toggleClass("active");
 		$('#bili_set_status').html('<a class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</a>');
 	}
+	//函数 360兼容
+	function init_the_special(){
+		GM_getValue('init360') ? GM_setValue('init360', 0) : GM_setValue('init360', 1);
+		var s = GM_getValue('init360') ?  '已打开,请刷新' : '已关闭，请刷新';
+		document.getElementById('init360').innerHTML = s;
+		$("#init360").toggleClass("active");
+		$('#bili_set_status').html('<a class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</a>');
+	}
 	/**
 -------------------------------函数 Model-------------------------------------
 */
@@ -182,12 +197,14 @@
 						var type = lp.type;
 						insert_html(type); //UI
 						//修复360浏览器flash霸占脚本设置区域
+						if(GM_getValue('init360') ==1){
 						$("#bili_fix_script,#bili-fix-player-installed").mouseover(function(){
 						$("#bofqi,#bofqi_embed").addClass("hide");
 						});
 						$("#bili_fix_script,#bili-fix-player-installed").mouseout(function(){
 						$("#bofqi,#bofqi_embed").removeClass("hide");
 						});
+						}
 						var cid_xml_url = 'http://comment.bilibili.com/' + cid + '.xml';
 						$('#down_cid_xml').attr('href', cid_xml_url); //弹幕下载
 						Replace_player(aid, cid); //替换播放器 
@@ -195,12 +212,80 @@
 						aid_down_av(aid, page); //av画质下载（单文件）
 					} else {
 						window_player_init(); //执行弹窗函数
+						reload_spajax_function();//专题专题ajax点击后重新渲染
 					}
 				}
 			}
 		});
 	}
+	//专题弹窗函数重写
+	function reload_spajax_function(){
+			var spid=unsafeWindow.spid;
+			var nocache=unsafeWindow.nocache;
+			var lastPage=unsafeWindow.lastPage;
+			unsafeWindow.loadSpPage=function (f, h, e) {
+			$("#sp_order > a").removeClass("on");
+			$("#sp_order_" + h).addClass("on");
+			curorder = h;
+			f = "/sppage/" + f + "-" + h + "-" + spid + "-" + e + ".html" + (nocache ? "?r=" + Math.random() : "");
+			if (f != lastPage) {
+				lastPage = f;
+				$("#tag_video_container > .loading").remove();
+				$('<div class="loading"></div>').prependTo("#tag_video_container");
+				var g = new Date;
+				$.ajax(lastPage, {
+					success: function(b) {
+						var d = (new Date).getTime() - g.getTime();
+						500 > d ? setTimeout(function() {
+							$("#tag_video_container").html(b);
+							bindPOCoins2($(".v"))
+						}, 0 >= 300 - d ? 10 : 300 - d) : $("#tag_video_container").html(b);
+						//ajax_zt_video();//专题专题ajax点击后重新渲染
+						$('#tag_video_container .t').each(
+						function() {
+							var href = $(this).parents('a').attr('href');
+							var pattern = /\/video\/av(\d+)\//ig;
+							var content = pattern.exec(href);
+							var aid = content ? (content[1]) : '';
+							$(this).prepend('<a class="single_player" href="javascript:void(0);" style="color:red;" data-field="' + aid + '">【弹▶】</a>');
+						});
+						single_player();
+					}
+				})
+			}
+		}
 
+		unsafeWindow.loadBgmPage=function (f, h) {
+			$("#season_selector li.on").removeClass("on");
+			$("#season_selector li[season_id=" + (void 0 !== h ? h : 0) + "]").addClass("on");
+			var e = "/sppage/bangumi-" + spid + "-" + (void 0 !== h ? h + "-" : "") + f + ".html" + (nocache ? "?r=" + Math.random() : "");
+			if (e != lastPage) {
+				nocache = !1;
+				lastPage = e;
+				$("#bgm_video_container > .loading").remove();
+				$('<div class="loading"></div>').prependTo("#bgm_video_container");
+				var g = new Date;
+				$.ajax(lastPage, {
+					success: function(b) {
+						var d = (new Date).getTime() - g.getTime();
+						500 > d ? setTimeout(function() {
+							$("#bgm_video_container").html(b)
+						}, 0 >= 300 - d ? 10 : 300 - d) : $("#bgm_video_container").html(b);
+						//ajax_zt_video();//专题专题ajax点击后重新渲染
+						$('#bgm_video_container .t').each(
+						function() {
+							var href = $(this).parents('a').attr('href');
+							var pattern = /\/video\/av(\d+)\//ig;
+							var content = pattern.exec(href);
+							var aid = content ? (content[1]) : '';
+							$(this).prepend('<a class="single_player" href="javascript:void(0);" style="color:red;" data-field="' + aid + '">【弹▶】</a>');
+						});
+						single_player();
+					}
+				})
+			}
+		}
+	}
 	//播放器支持页面全屏 来自田生
 	function fix_player_fullwin() {
 		setTimeout(function () {
@@ -332,7 +417,7 @@
 				var pattern = /\/video\/av(\d+)\//ig;
 				var content = pattern.exec(href);
 				var aid = content ? (content[1]) : '';
-				$(this).prepend('<a class="single_player" href="javascript:void(0);" style="color:red;" data-field="' + aid + '">弹▶</a>');
+				$(this).prepend('<a class="single_player" href="javascript:void(0);" style="color:red;" data-field="' + aid + '">【弹▶】</a>');
 			});
 		//搜索列表弹窗UI
 		$('.result li .r a').each(
@@ -342,7 +427,7 @@
 				var content = pattern.exec(href);
 				var aid = content ? (content[1]) : '';
 				if (aid != '') {
-					$(this).find('.t').prepend('<a class="single_player" href="javascript:void(0);" style="color:red;" data-field="' + aid + '">弹▶</a>');
+					$(this).find('.t').prepend('<a class="single_player" href="javascript:void(0);" style="color:red;" data-field="' + aid + '">【弹▶】</a>');
 				}
 			});
 		//带缩略图弹窗UI、和侧栏新投稿弹窗UI、首页的推荐栏弹窗、侧栏列表弹窗UI
@@ -352,9 +437,23 @@
 				var pattern = /\/video\/av(\d+)\//ig;
 				var content = pattern.exec(href);
 				var aid = content ? (content[1]) : '';
-				$(this).find('.t').prepend('<a class="single_player" href="javascript:void(0);" style="color:red;" data-field="' + aid + '">弹▶</a>');
+				$(this).find('.t').prepend('<a class="single_player" href="javascript:void(0);" style="color:red;" data-field="' + aid + '">【弹▶】</a>');
 			});
-		//弹窗默认的第一P，建立弹窗播放器并建立分P列表===click事件应该在each事件之后执行
+		//专题
+		$('.vidbox.zt  .t').each(
+			function() {
+				var href = $(this).parents('a').attr('href');
+				var pattern = /\/video\/av(\d+)\//ig;
+				var content = pattern.exec(href);
+				var aid = content ? (content[1]) : '';
+				$(this).prepend('<a class="single_player" href="javascript:void(0);" style="color:red;" data-field="' + aid + '">【弹▶】</a>');
+			});
+		//弹窗初始化
+		single_player();
+	}
+	
+	//弹窗默认的第一P，建立弹窗播放器并建立分P列表===click事件应该在each事件之后执行
+		function single_player(){
 		$('.single_player').click(
 			function() {
 				//$('.dialogcontainter').remove();//防止同时播放两个视频
@@ -364,7 +463,7 @@
 							
 				var title = $(this).parent('.t').html() === null ? $(this).parent('.title').html() : $(this).parent('.t').html();
 				var aid = $(this).attr('data-field');
-				var title_html = '<a class="mark_my_video" href="javascript:void(0);" style="color:#006766;" data-field="' + aid + '">收藏★</a>&nbsp;&nbsp;&nbsp;<a href="http://www.bilibili.com/video/av' + aid + '/" style="color:#D54851" target="_blank">打开播放页</a>&nbsp;&nbsp;&nbsp;<span style="color:#8C8983">' + title.replace('弹▶', '') + '</span>&nbsp;&nbsp;&nbsp;▶<span id="window_play_info"></span>';			
+				var title_html = '<a class="mark_my_video" href="javascript:void(0);" style="color:#006766;" data-field="' + aid + '">收藏★</a>&nbsp;&nbsp;&nbsp;<a href="http://www.bilibili.com/video/av' + aid + '/" style="color:#D54851" target="_blank">打开播放页</a>&nbsp;&nbsp;&nbsp;<span style="color:#8C8983">' + title.replace('【弹▶】', '') + '</span>&nbsp;&nbsp;&nbsp;▶<span id="window_play_info"></span>';			
 				setTimeout(function() {
 					creat(title_html, a); //创建可视化窗口
 					$('.dialogcontainter').after(list_html);
@@ -420,7 +519,8 @@
 					aid_build_player(aid);
 				}, 0);
 			});
-	}
+			}
+			
 	//END弹窗------------------------------
 
 
@@ -619,7 +719,7 @@
 			}
 			addListener(document, 'mousemove', this._fM);
 			addListener(document, 'mouseup', this._fS);
-			$("#player_content").addClass("hide");
+			if(GM_getValue('init360') ==1)$("#player_content").addClass("hide");
 		},
 		Move: function(e) {
 			window.getSelection ? window.getSelection().removeAllRanges() : document.selection.empty();
