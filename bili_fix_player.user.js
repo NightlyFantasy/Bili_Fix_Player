@@ -4,7 +4,7 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.6.6
+// @version     3.7.0
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @require http://static.hdslb.com/js/jquery.min.js
@@ -17,6 +17,7 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
+2014-09-04B站UI升级导致脚本失效，修复为临时版本，因为B站部分列表变成AJAX，脚本给ajax后的内容添加支持比较麻烦，等博主搬砖活干完，谢谢支持
 2014-08-15增加专题弹窗，移除对所有播放器都采用打开菜单时将视频移开的功能，需要360浏览器用户自己设置打开此功能
 2014-08-01弹窗网页全屏在田生大神帮助下完美解决（chrome无解），同时博主修复视频播放页面的网页全屏
 2014-07-26弹窗因为本人技术问题无法完美解决，使用embed标签替换，可以网页全屏，但是关闭弹窗后会导致鼠标滚轮无效使用iframe标签无滚轮bug，但是因为跨域了，导致无法网页全屏
@@ -75,23 +76,25 @@
 		var harm=GM_getValue('pagebox_harm') ? '和谐娘打酱油中' : '默认[和谐娘和谐中]';
 		var init360=GM_getValue('init360') ? '已打开' : '已关闭';
 		//var container=GM_getValue('player_container')?'iframe[无滚动条bug]':'embed[无拖放bug]';
-		var div = '<a style="color:red" id="bili-fix-player-installed">脚本(｀・ω・´)</a>\
-						<ul class="i_num" id="bili_fix_script">\
-						<li>360浏览器兼容[非360勿开]:<a id="init360" class="bfpbtn">' + init360 + '</a></li>\
-						<li><a class="font">若无限小电视则尝试关闭修复</a><a target="_blank" href="http://bilili.ml/361.html">BUG反馈</a></li>\
-						<li><a>本页视频源:<b style="color:#F489AD">' + type + '</b></a></li>\
-						<li><a class="font">高清视频下载HD(右键复制以下视频分段下载链接，然后在新标签粘贴打开即可不被403)</a><div class="m_num" id="av_source">\
-						</div></li>\
-						<li><a class="font" target="_blank" id="aid_down_av">模糊画质视频下载(单文件)</a></li>\
-						<li><a id="down_cid_xml" target="_blank">弹幕下载</a></li>\
-						<li><a>自动修复(修改后请刷新页面):<a id="bili_fix" class="bfpbtn">' + auto + '</a></a></li>\
-						<li><a class="font">播放器大小(小型在火狐弹窗无BUG):<a id="player_size" class="bfpbtn">' + player_size + '</a></a></li>\
-						<li><a>评论区分页导航:<a id="pagebox-display" class="bfpbtn">' + display + '</a></a></li>\
-						<li><a>评论区和谐娘:<a id="pagebox-harm" class="bfpbtn">' + harm + '</a></a></li>\
-						<li><a id="bili_set_status">就绪中→_→</a></li>\
+		var div = '<div ><a style="color:red" id="bili-fix-player-installed" class="i-link">脚本</a>\
+						<ul class="i_num i_num_a blborder" id="bili_fix_script">\
+						<li><a>360浏览器兼容[非360勿开]:<bl id="init360" class="bfpbtn">' + init360 + '</bl></a><em></em></li>\
+						<li><a target="_blank" href="http://bilili.ml/361.html">若无限小电视则尝试关闭修复-BUG反馈</a><em></em></li>\
+						<li><a>本页视频源:<bl style="color:#F489AD">' + type + '</bl></a><em></em></li>\
+						<li><a class="font">高清视频下载</a><div class="m_num" id="av_source">\
+						</div><em></em></li>\
+						<li><a class="font" target="_blank" id="aid_down_av">单文件[模糊]视频下载</a><em></em></li>\
+						<li><a id="down_cid_xml" target="_blank">弹幕下载</a><em></em></li>\
+						<li><a>自动修复(修改后请刷新页面):<bl id="bili_fix" class="bfpbtn">' + auto + '</bl></a><em></em></li>\
+						<li><a class="font">播放器大小(小型在火狐弹窗无BUG):<bl id="player_size" class="bfpbtn">' + player_size + '</bl></a><em></em></li>\
+						<li><a>评论区分页导航:<bl id="pagebox-display" class="bfpbtn">' + display + '</bl></a><em></em></li>\
+						<li><a>评论区和谐娘:<bl id="pagebox-harm" class="bfpbtn">' + harm + '</bl></a><em></em></li>\
+						<li><a id="bili_set_status">就绪中→_→</a><em></em></li>\
 						</ul>\
-						<span class="addnew_5">+10086</span>';
-		$('div.num:nth-child(4) > ul:nth-child(1) > li:nth-child(1)').html(div);
+						<span class="addnew_5">+10086</span></div>';
+		//$('li.m-i:nth-child(1) > a:nth-child(1)').html(div);
+		$('li.m-i:nth-child(1) > a:nth-child(1)').prop('outerHTML',div);
+		//$('li.m-i:nth-child(1) > a:nth-child(1)').html(div);
 		//监听修复按钮
 		var bfpbtn = document.querySelector("#bili_fix");
 		bfpbtn.addEventListener("click", set_auto, false);
@@ -123,7 +126,7 @@
 		var s = GM_getValue('auto') ? '已打开' : '已关闭';
 		document.getElementById('bili_fix').innerHTML = s;
 		$("#bili_fix").toggleClass("active");
-		$('#bili_set_status').html('<a class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</a>');
+		$('#bili_set_status').html('<bl class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</bl>');
 	}
 	//播放器大小按钮事件
 
@@ -132,7 +135,7 @@
 		var s = GM_getValue('player_size') ? '大型' : '小型';
 		document.getElementById('player_size').innerHTML = s;
 		$("#player_size").toggleClass("active");
-		$('#bili_set_status').html('<a class="bfpbtn active font">已更改,刷新生效_(:3」∠)_</a>');
+		$('#bili_set_status').html('<bl class="bfpbtn active font">已更改,刷新生效_(:3」∠)_</bl>');
 	}
 	
 	//函数 评论分页功能显示切换（悬浮、原来位置）
@@ -141,7 +144,7 @@
 		var s = GM_getValue('pagebox_display') ? '悬浮' : '默认';
 		document.getElementById('pagebox-display').innerHTML = s;
 		$("#pagebox-display").toggleClass("active");
-		$('#bili_set_status').html('<a class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</a>');
+		$('#bili_set_status').html('<bl class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</bl>');
 	}
 	
 	//函数 评论和谐娘功能切换
@@ -150,7 +153,7 @@
 		var s = GM_getValue('pagebox_harm') ?  '和谐娘打酱油中' : '默认[和谐娘和谐中]';
 		document.getElementById('pagebox-harm').innerHTML = s;
 		$("#pagebox-harm").toggleClass("active");
-		$('#bili_set_status').html('<a class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</a>');
+		$('#bili_set_status').html('<bl class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</bl>');
 	}
 	//函数 360兼容
 	function init_the_special(){
@@ -158,7 +161,7 @@
 		var s = GM_getValue('init360') ?  '已打开,请刷新' : '已关闭，请刷新';
 		document.getElementById('init360').innerHTML = s;
 		$("#init360").toggleClass("active");
-		$('#bili_set_status').html('<a class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</a>');
+		$('#bili_set_status').html('<bl class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</bl>');
 	}
 	/**
 -------------------------------函数 Model-------------------------------------
@@ -247,7 +250,7 @@
 							var pattern = /\/video\/av(\d+)\//ig;
 							var content = pattern.exec(href);
 							var aid = content ? (content[1]) : '';
-							$(this).prepend('<a class="single_player" href="javascript:void(0);" style="color:red;" data-field="' + aid + '">【弹▶】</a>');
+							$(this).prepend('<a class="single_player singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
 						});
 						single_player();
 					}
@@ -278,7 +281,7 @@
 							var pattern = /\/video\/av(\d+)\//ig;
 							var content = pattern.exec(href);
 							var aid = content ? (content[1]) : '';
-							$(this).prepend('<a class="single_player" href="javascript:void(0);" style="color:red;" data-field="' + aid + '">【弹▶】</a>');
+							$(this).prepend('<a class="single_player  singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
 						});
 						single_player();
 					}
@@ -417,7 +420,7 @@
 				var pattern = /\/video\/av(\d+)\//ig;
 				var content = pattern.exec(href);
 				var aid = content ? (content[1]) : '';
-				$(this).prepend('<a class="single_player" href="javascript:void(0);" style="color:red;" data-field="' + aid + '">【弹▶】</a>');
+				$(this).prepend('<a class="single_player singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
 			});
 		//搜索列表弹窗UI
 		$('.result li .r a').each(
@@ -427,17 +430,17 @@
 				var content = pattern.exec(href);
 				var aid = content ? (content[1]) : '';
 				if (aid != '') {
-					$(this).find('.t').prepend('<a class="single_player" href="javascript:void(0);" style="color:red;" data-field="' + aid + '">【弹▶】</a>');
+					$(this).find('.t').prepend('<a class="single_player singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
 				}
 			});
 		//带缩略图弹窗UI、和侧栏新投稿弹窗UI、首页的推荐栏弹窗、侧栏列表弹窗UI
-		$('.video li a,.z-r.new li a,#suggest li a,.rlist li a').each(
+		$('.vidbox.v-list li a,.bgm-calendar.bgmbox li a,.rlist li a,.rm-list li a,.r-list li a').each(
 			function() {
 				var href = $(this).attr('href');
 				var pattern = /\/video\/av(\d+)\//ig;
 				var content = pattern.exec(href);
 				var aid = content ? (content[1]) : '';
-				$(this).find('.t').prepend('<a class="single_player" href="javascript:void(0);" style="color:red;" data-field="' + aid + '">【弹▶】</a>');
+				$(this).find('.t').prepend('<a class="single_player singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
 			});
 		//专题
 		$('.vidbox.zt  .t').each(
@@ -446,7 +449,7 @@
 				var pattern = /\/video\/av(\d+)\//ig;
 				var content = pattern.exec(href);
 				var aid = content ? (content[1]) : '';
-				$(this).prepend('<a class="single_player" href="javascript:void(0);" style="color:red;" data-field="' + aid + '">【弹▶】</a>');
+				$(this).prepend('<a class="single_player singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
 			});
 		//弹窗初始化
 		single_player();
@@ -463,7 +466,7 @@
 							
 				var title = $(this).parent('.t').html() === null ? $(this).parent('.title').html() : $(this).parent('.t').html();
 				var aid = $(this).attr('data-field');
-				var title_html = '<a class="mark_my_video" href="javascript:void(0);" style="color:#006766;" data-field="' + aid + '">收藏★</a>&nbsp;&nbsp;&nbsp;<a href="http://www.bilibili.com/video/av' + aid + '/" style="color:#D54851" target="_blank">打开播放页</a>&nbsp;&nbsp;&nbsp;<span style="color:#8C8983">' + title.replace('【弹▶】', '') + '</span>&nbsp;&nbsp;&nbsp;▶<span id="window_play_info"></span>';			
+				var title_html = '<a class="mark_my_video singleplaybtn" href="javascript:void(0);" style="color:white;background:none repeat scroll 0% 0% #009900!important;" data-field="' + aid + '">收藏★</a>&nbsp;&nbsp;&nbsp;<a class="singleplaybtn" href="http://www.bilibili.com/video/av' + aid + '/" style="color:white;background:none repeat scroll 0% 0% #FFB901!important;" target="_blank">TO播放页</a>&nbsp;&nbsp;&nbsp;<span style="color:#8C8983">' + title.replace('弹▶', '') + '</span>&nbsp;&nbsp;&nbsp;▶<span id="window_play_info"></span>';			
 				setTimeout(function() {
 					creat(title_html, a); //创建可视化窗口
 					$('.dialogcontainter').after(list_html);
@@ -541,7 +544,7 @@
 	//当设置悬浮评论分页栏时，增加css
 	if (GM_getValue('pagebox_display') == 1) {
 	if(url.indexOf('video/av')>-1){
-		 var css='.pagelistbox{position:fixed;top:150px;  right:0px;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}';
+		 var css='.pagelistbox.top{z-index:999;position:fixed;bottom:10px;  left:0px;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");box-shadow: 3px 3px 13px rgba(34, 25, 25, 0.4);}';
 		 GM_addStyle(css);}
 		}
 		
@@ -553,7 +556,7 @@
 		}	
 	
 	//css插入
-	var css = '.bfpbtn{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 2px;transition-property:#000,color;transition-duration:0.3s;box-shadow:none;color:#FFF;text-shadow:none;border:medium none;background:none repeat scroll 0% 0% #00A1CB!important;}.bfpbtn.active{background:none repeat scroll 0% 0%  #F489AD!important;}.bfpbtn.notice{background-color:#A300C0!important;}.font{font-size:11px!important;}#window_play_list li{float:left;position:relative;width:5em;border:1px solid #B0C4DE;font:80% Verdana,Geneva,Arial,Helvetica,sans-serif;}.ui.corner.label{height:0px;border-width:0px 3em 3em 0px;border-style:solid;border-top:0px solid transparent;border-bottom:3em solid transparent;border-left:0px solid transparent;border-right-color:rgb(217,92,92)!important;transition:border-color 0.2s ease 0s;position:absolute;content:"";right:0px;top:0px;z-index:-1;width:0px;}.ui.corner.label i{display:inline-block;margin:3px 0.25em 0px 17px;width:1.23em;height:1em;font-weight:800!important;}.dialogcontainter{height:400px;width:400px;border:1px solid #14495f;position:fixed;font-size:13px;}.dialogtitle{height:26px;width:auto;background-color:#C6C6C6;}.dialogtitleinfo{float:left;height:20px;margin-top:2px;margin-left:10px;line-height:20px;vertical-align:middle;color:#FFFFFF;font-weight:bold;}.dialogtitleico{float:right;height:20px;width:21px;margin-top:2px;margin-right:5px;text-align:center;line-height:20px;vertical-align:middle;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-21px 0px}.dialogbody{padding:10px;width:auto;background-color:#FFFFFF;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}.dialogbottom{bottom:1px;right:1px;cursor:nw-resize;position:absolute;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-42px -10px;width:10px;height:10px;font-size:0;}.button-small{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 5px;}.button-flat-action{transition-duration:0.3s;box-shadow:none;background:none repeat scroll 0% 0% #7DB500;color:#FFF!important;text-shadow:none;border:medium none;border-radius:3px;}#player-list{position:fixed;z-index:1000;left:10px;top:50px;width:400px!important;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");min-height:200px!Important;}#player_content{position:absolute;top:60px;left:10px;right:10px;bottom:10px;}#window-player{bottom:0;height:100%;left:0;right:0;top:0;width:100%;}a.single_player{display:none;}a:hover .single_player{display:inline;}#bofqi_embed.hide,#bofqi.hide,#player_content.hide{margin-left:3000px!important;transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}#bofqi_embed,#bofqi,#player_content{transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}';
+	var css = '.blborder{box-shadow: 0px 3px 3px rgba(34, 25, 25, 0.4);}.singleplaybtn{box-shadow: 0px 1px 1px rgba(34, 25, 25, 0.4);background:none repeat scroll 0% 0% #FF6666!important;}.bfpbtn{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 2px;transition-property:#000,color;transition-duration:0.3s;box-shadow:none;color:#FFF;text-shadow:none;border:medium none;background:none repeat scroll 0% 0% #00A1CB!important;}.bfpbtn.active{background:none repeat scroll 0% 0%  #F489AD!important;}.bfpbtn.notice{background-color:#A300C0!important;}.font{font-size:11px!important;}#window_play_list li{float:left;position:relative;width:5em;border:1px solid #B0C4DE;font:80% Verdana,Geneva,Arial,Helvetica,sans-serif;}.ui.corner.label{height:0px;border-width:0px 3em 3em 0px;border-style:solid;border-top:0px solid transparent;border-bottom:3em solid transparent;border-left:0px solid transparent;border-right-color:rgb(217,92,92)!important;transition:border-color 0.2s ease 0s;position:absolute;content:"";right:0px;top:0px;z-index:-1;width:0px;}.ui.corner.label i{display:inline-block;margin:3px 0.25em 0px 17px;width:1.23em;height:1em;font-weight:800!important;}.dialogcontainter{z-index:99999!important;height:400px;width:400px;border:1px solid #14495f;position:fixed;font-size:13px;}.dialogtitle{height:26px;width:auto;background-color:#C6C6C6;}.dialogtitleinfo{float:left;height:20px;margin-top:2px;margin-left:10px;line-height:20px;vertical-align:middle;color:#FFFFFF;font-weight:bold;}.dialogtitleico{float:right;height:20px;width:21px;margin-top:2px;margin-right:5px;text-align:center;line-height:20px;vertical-align:middle;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-21px 0px}.dialogbody{padding:10px;width:auto;background-color:#FFFFFF;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}.dialogbottom{bottom:1px;right:1px;cursor:nw-resize;position:absolute;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-42px -10px;width:10px;height:10px;font-size:0;}.button-small{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 5px;}.button-flat-action{transition-duration:0.3s;box-shadow:none;background:none repeat scroll 0% 0% #7DB500;color:#FFF!important;text-shadow:none;border:medium none;border-radius:3px;}#player-list{box-shadow: 3px 3px 13px rgba(34, 25, 25, 0.4);position:fixed;z-index:1000;left:10px;top:50px;width:400px!important;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");min-height:200px!Important;}#player_content{position:absolute;top:60px;left:10px;right:10px;bottom:10px;}#window-player{bottom:0;height:100%;left:0;right:0;top:0;width:100%;}a.single_player{display:none;}a:hover .single_player{display:inline;}#bofqi_embed.hide,#bofqi.hide,#player_content.hide{margin-left:3000px!important;transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}#bofqi_embed,#bofqi,#player_content{transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}';
 	GM_addStyle(css);
 
 
