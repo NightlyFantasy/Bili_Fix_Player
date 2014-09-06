@@ -4,7 +4,7 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.7.0
+// @version     3.7.1
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @require http://static.hdslb.com/js/jquery.min.js
@@ -17,6 +17,7 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
+2014-09-06由于B站可以自由切换新版旧版的首页，增加对其支持（增加重新渲染弹窗按钮，如果发现部分列表无弹窗按钮则点击），同时恢复记录弹窗播放器垂直位置，为保证播放器不会不知所踪，设置垂直位置有极限值，超过此值域会被自动初始化；
 2014-09-04B站UI升级导致脚本失效，修复为临时版本，因为B站部分列表变成AJAX，脚本给ajax后的内容添加支持比较麻烦，等博主搬砖活干完，谢谢支持
 2014-08-15增加专题弹窗，移除对所有播放器都采用打开菜单时将视频移开的功能，需要360浏览器用户自己设置打开此功能
 2014-08-01弹窗网页全屏在田生大神帮助下完美解决（chrome无解），同时博主修复视频播放页面的网页全屏
@@ -60,7 +61,7 @@
 	if (GM_getValue('player_width') == undefined) GM_setValue('player_width', 950);
 	if (GM_getValue('player_height') == undefined) GM_setValue('player_height', 482);
 	//初始化播放器外框位置
-	//if (GM_getValue('div_top') == undefined) GM_setValue('div_top', 100);//设置垂直位置的时候，如果是长页而且是浮动播放器时候记录位置，会导致播放器不知所踪
+	if (GM_getValue('div_top') == undefined) GM_setValue('div_top', 100);//设置垂直位置的时候，如果是长页而且是浮动播放器时候记录位置，会导致播放器不知所踪
 	if (GM_getValue('div_left') == undefined) GM_setValue('div_left', 100);
 	//初始化jquery支持
 	//var $ = unsafeWindow.$;
@@ -215,12 +216,23 @@
 						aid_down_av(aid, page); //av画质下载（单文件）
 					} else {
 						window_player_init(); //执行弹窗函数
-						reload_spajax_function();//专题专题ajax点击后重新渲染
+						reload_spajax_function();//专题专题ajax点击后重新渲染						
+						load_manual_window();//加载手动渲染弹窗
 					}
 				}
 			}
 		});
 	}
+	
+	//加载手动渲染弹窗
+	function load_manual_window(){
+	var html='<div id="load_manual_window"><div onclick="$(\'#load_manual_window\').remove()" style="color:#F489AD">Ｘ</div><div id="load_manual_window_btn" class="manual_window_btn" title="当部分列表无弹窗按钮的时候，请点我">重新渲染弹窗</div></div>';
+	$('div.header').prepend(html);
+	$('#load_manual_window_btn').click(function(){
+	window_player_init();
+	});
+	}
+	
 	//专题弹窗函数重写
 	function reload_spajax_function(){
 			var spid=unsafeWindow.spid;
@@ -246,11 +258,13 @@
 						//ajax_zt_video();//专题专题ajax点击后重新渲染
 						$('#tag_video_container .t').each(
 						function() {
+							if($(this).attr('has_window_btn')==undefined){
+							$(this).attr('has_window_btn','true');
 							var href = $(this).parents('a').attr('href');
 							var pattern = /\/video\/av(\d+)\//ig;
 							var content = pattern.exec(href);
 							var aid = content ? (content[1]) : '';
-							$(this).prepend('<a class="single_player singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
+							$(this).prepend('<a class="single_player singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');}
 						});
 						single_player();
 					}
@@ -277,11 +291,13 @@
 						//ajax_zt_video();//专题专题ajax点击后重新渲染
 						$('#bgm_video_container .t').each(
 						function() {
-							var href = $(this).parents('a').attr('href');
+							if($(this).attr('has_window_btn')==undefined){
+							$(this).attr('has_window_btn','true');
+							var href = $(this).attr('href');
 							var pattern = /\/video\/av(\d+)\//ig;
 							var content = pattern.exec(href);
 							var aid = content ? (content[1]) : '';
-							$(this).prepend('<a class="single_player  singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
+							$(this).prepend('<a class="single_player  singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');}
 						});
 						single_player();
 					}
@@ -416,40 +432,76 @@
 		//新番列表弹窗UI
 		$('.vd_list .title').each(
 			function() {
+				if($(this).attr('has_window_btn')==undefined){
+				$(this).attr('has_window_btn','true');
 				var href = $(this).attr('href');
 				var pattern = /\/video\/av(\d+)\//ig;
 				var content = pattern.exec(href);
 				var aid = content ? (content[1]) : '';
 				$(this).prepend('<a class="single_player singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
+				}
 			});
-		//搜索列表弹窗UI
-		$('.result li .r a').each(
+		//搜索列表专题List
+		$('.s_bgmlist li a').each(
 			function() {
+				if($(this).attr('has_window_btn')==undefined){
+				$(this).attr('has_window_btn','true');
+				var href = $(this).attr('href');
+				var pattern = /\/video\/av(\d+)/ig;
+				var content = pattern.exec(href);
+				var aid = content ? (content[1]) : '';
+				$('.s_v_l li .s_bgmlist ul li a').css('display','inline');//防止A标签换行导致无法点击
+				if (aid != '') {
+					$(this).parent('li').prepend('<bl class="single_player singleplaybtn" style="color:white;" data-field="' + aid + '">弹▶</bl>&nbsp;&nbsp;');}
+				}
+			});	
+		//搜索列表弹窗UI
+ 		$('.result li .r a').each(
+			function() {
+				if($(this).attr('has_window_btn')==undefined){
+				$(this).attr('has_window_btn','true');
 				var href = $(this).attr('href');
 				var pattern = /\/video\/av(\d+)\//ig;
 				var content = pattern.exec(href);
 				var aid = content ? (content[1]) : '';
 				if (aid != '') {
 					$(this).find('.t').prepend('<a class="single_player singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
+					}
 				}
-			});
+			}); 
+
 		//带缩略图弹窗UI、和侧栏新投稿弹窗UI、首页的推荐栏弹窗、侧栏列表弹窗UI
-		$('.vidbox.v-list li a,.bgm-calendar.bgmbox li a,.rlist li a,.rm-list li a,.r-list li a').each(
+		$('.vidbox.v-list li a,.bgm-calendar.bgmbox li a,.rlist li a,.rm-list li a,.r-list li a,.top-list li a').each(
 			function() {
+				if($(this).attr('has_window_btn')==undefined){
+				$(this).attr('has_window_btn','true');
 				var href = $(this).attr('href');
 				var pattern = /\/video\/av(\d+)\//ig;
 				var content = pattern.exec(href);
 				var aid = content ? (content[1]) : '';
-				$(this).find('.t').prepend('<a class="single_player singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
+				$(this).find('.t').prepend('<a class="single_player singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');}
 			});
 		//专题
 		$('.vidbox.zt  .t').each(
 			function() {
-				var href = $(this).parents('a').attr('href');
+				if($(this).attr('has_window_btn')==undefined){
+				$(this).attr('has_window_btn','true');
+				var href = $(this).attr('href');
 				var pattern = /\/video\/av(\d+)\//ig;
 				var content = pattern.exec(href);
 				var aid = content ? (content[1]) : '';
-				$(this).prepend('<a class="single_player singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
+				$(this).prepend('<a class="single_player singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');}
+			});
+		//旧版首页分区列表
+		$('.video  li a,.video-wrapper li a').each(
+			function() {
+				if($(this).attr('has_window_btn')==undefined){
+				$(this).attr('has_window_btn','true');
+				var href = $(this).attr('href');
+				var pattern = /\/video\/av(\d+)\//ig;
+				var content = pattern.exec(href);
+				var aid = content ? (content[1]) : '';
+				$(this).find('.t').prepend('<a class="single_player singleplaybtn" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');}
 			});
 		//弹窗初始化
 		single_player();
@@ -465,6 +517,7 @@
 				var list_html = '<div id="player-list"><div class="sort"><i>分P列表</i></div><ul id="window_play_list"></ul></div>';
 							
 				var title = $(this).parent('.t').html() === null ? $(this).parent('.title').html() : $(this).parent('.t').html();
+				if(title===null)title='第<'+$(this).parent('li').find('a').html()+'>P';
 				var aid = $(this).attr('data-field');
 				var title_html = '<a class="mark_my_video singleplaybtn" href="javascript:void(0);" style="color:white;background:none repeat scroll 0% 0% #009900!important;" data-field="' + aid + '">收藏★</a>&nbsp;&nbsp;&nbsp;<a class="singleplaybtn" href="http://www.bilibili.com/video/av' + aid + '/" style="color:white;background:none repeat scroll 0% 0% #FFB901!important;" target="_blank">TO播放页</a>&nbsp;&nbsp;&nbsp;<span style="color:#8C8983">' + title.replace('弹▶', '') + '</span>&nbsp;&nbsp;&nbsp;▶<span id="window_play_info"></span>';			
 				setTimeout(function() {
@@ -521,12 +574,10 @@
 				setTimeout(function() {
 					aid_build_player(aid);
 				}, 0);
-			});
+			});	
 			}
 			
 	//END弹窗------------------------------
-
-
 
 	//替换播放器----------------------------
 	//取出aid和分P
@@ -556,7 +607,7 @@
 		}	
 	
 	//css插入
-	var css = '.blborder{box-shadow: 0px 3px 3px rgba(34, 25, 25, 0.4);}.singleplaybtn{box-shadow: 0px 1px 1px rgba(34, 25, 25, 0.4);background:none repeat scroll 0% 0% #FF6666!important;}.bfpbtn{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 2px;transition-property:#000,color;transition-duration:0.3s;box-shadow:none;color:#FFF;text-shadow:none;border:medium none;background:none repeat scroll 0% 0% #00A1CB!important;}.bfpbtn.active{background:none repeat scroll 0% 0%  #F489AD!important;}.bfpbtn.notice{background-color:#A300C0!important;}.font{font-size:11px!important;}#window_play_list li{float:left;position:relative;width:5em;border:1px solid #B0C4DE;font:80% Verdana,Geneva,Arial,Helvetica,sans-serif;}.ui.corner.label{height:0px;border-width:0px 3em 3em 0px;border-style:solid;border-top:0px solid transparent;border-bottom:3em solid transparent;border-left:0px solid transparent;border-right-color:rgb(217,92,92)!important;transition:border-color 0.2s ease 0s;position:absolute;content:"";right:0px;top:0px;z-index:-1;width:0px;}.ui.corner.label i{display:inline-block;margin:3px 0.25em 0px 17px;width:1.23em;height:1em;font-weight:800!important;}.dialogcontainter{z-index:99999!important;height:400px;width:400px;border:1px solid #14495f;position:fixed;font-size:13px;}.dialogtitle{height:26px;width:auto;background-color:#C6C6C6;}.dialogtitleinfo{float:left;height:20px;margin-top:2px;margin-left:10px;line-height:20px;vertical-align:middle;color:#FFFFFF;font-weight:bold;}.dialogtitleico{float:right;height:20px;width:21px;margin-top:2px;margin-right:5px;text-align:center;line-height:20px;vertical-align:middle;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-21px 0px}.dialogbody{padding:10px;width:auto;background-color:#FFFFFF;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}.dialogbottom{bottom:1px;right:1px;cursor:nw-resize;position:absolute;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-42px -10px;width:10px;height:10px;font-size:0;}.button-small{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 5px;}.button-flat-action{transition-duration:0.3s;box-shadow:none;background:none repeat scroll 0% 0% #7DB500;color:#FFF!important;text-shadow:none;border:medium none;border-radius:3px;}#player-list{box-shadow: 3px 3px 13px rgba(34, 25, 25, 0.4);position:fixed;z-index:1000;left:10px;top:50px;width:400px!important;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");min-height:200px!Important;}#player_content{position:absolute;top:60px;left:10px;right:10px;bottom:10px;}#window-player{bottom:0;height:100%;left:0;right:0;top:0;width:100%;}a.single_player{display:none;}a:hover .single_player{display:inline;}#bofqi_embed.hide,#bofqi.hide,#player_content.hide{margin-left:3000px!important;transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}#bofqi_embed,#bofqi,#player_content{transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}';
+	var css = '#load_manual_window,.dialogcontainter{text-align:center;}#load_manual_window{z-index:300;width:30px;cursor: pointer;left:40px;bottom:50px;position:fixed;padding: 0px 0px 10px;transition: all 0.1s linear 0s;background: none repeat scroll 0% 0% rgba(0, 0, 0, 0.5);color: #FFF;border: medium none;}#load_manual_window:hover{background-color: rgba(0, 0, 0, 0.7);}.singleplaybtn{box-shadow: 0px 1px 1px rgba(34, 25, 25, 0.4);background:none repeat scroll 0% 0% #FF6666!important;}.bfpbtn{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 2px;transition-property:#000,color;transition-duration:0.3s;box-shadow:none;color:#FFF;text-shadow:none;border:medium none;background:none repeat scroll 0% 0% #00A1CB!important;}.bfpbtn.active{background:none repeat scroll 0% 0%  #F489AD!important;}.bfpbtn.notice{background-color:#A300C0!important;}.font{font-size:11px!important;}#window_play_list li{float:left;position:relative;width:5em;border:1px solid #B0C4DE;font:80% Verdana,Geneva,Arial,Helvetica,sans-serif;}.ui.corner.label{height:0px;border-width:0px 3em 3em 0px;border-style:solid;border-top:0px solid transparent;border-bottom:3em solid transparent;border-left:0px solid transparent;border-right-color:rgb(217,92,92)!important;transition:border-color 0.2s ease 0s;position:absolute;content:"";right:0px;top:0px;z-index:-1;width:0px;}.ui.corner.label i{display:inline-block;margin:3px 0.25em 0px 17px;width:1.23em;height:1em;font-weight:800!important;}.dialogcontainter{z-index:99999!important;height:400px;width:400px;border:1px solid #14495f;position:fixed;font-size:13px;}.dialogtitle{height:26px;width:auto;background-color:#C6C6C6;}.dialogtitleinfo{float:left;height:20px;margin-top:2px;margin-left:10px;line-height:20px;vertical-align:middle;color:#FFFFFF;font-weight:bold;}.dialogtitleico{float:right;height:20px;width:21px;margin-top:2px;margin-right:5px;text-align:center;line-height:20px;vertical-align:middle;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-21px 0px}.dialogbody{padding:10px;width:auto;background-color:#FFFFFF;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}.dialogbottom{bottom:1px;right:1px;cursor:nw-resize;position:absolute;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-42px -10px;width:10px;height:10px;font-size:0;}.button-small{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 5px;}.button-flat-action{transition-duration:0.3s;box-shadow:none;background:none repeat scroll 0% 0% #7DB500;color:#FFF!important;text-shadow:none;border:medium none;border-radius:3px;}#player-list{box-shadow: 3px 3px 13px rgba(34, 25, 25, 0.4);position:fixed;z-index:1000;left:10px;top:50px;width:400px!important;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");min-height:200px!Important;}#player_content{position:absolute;top:60px;left:10px;right:10px;bottom:10px;}#window-player{bottom:0;height:100%;left:0;right:0;top:0;width:100%;}a.single_player{display:none;}a:hover .single_player{display:inline;}#bofqi_embed.hide,#bofqi.hide,#player_content.hide{margin-left:3000px!important;transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}#bofqi_embed,#bofqi,#player_content{transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}';
 	GM_addStyle(css);
 
 
@@ -743,7 +794,8 @@
 			$('#window-player').height($('.dialogcontainter').height() - 70);
 			GM_setValue('player_height', ($('.dialogcontainter').height() - 70));
 			//保存位置
-			//GM_setValue('div_top', ($('.dialogcontainter').offset().top));//设置垂直位置的时候，如果是长页而且是浮动播放器时候记录位置，会导致播放器不知所踪
+			var top_offset=parseInt($('.dialogcontainter').css('top'),10)>300?300:parseInt($('.dialogcontainter').css('top'),10);
+			GM_setValue('div_top',top_offset);//设置垂直位置的时候，如果是长页而且是浮动播放器时候记录位置，会导致播放器不知所踪
 			GM_setValue('div_left', ($('.dialogcontainter').offset().left));
 			if (isIE) {
 				removeListener(this._dragobj, "losecapture", this._fS);
@@ -759,7 +811,7 @@
 			new Dialog({
 				Info: title = title,
 				Left: GM_getValue('div_left'),
-				Top: 50,
+				Top:  GM_getValue('div_top'),
 				Width: (GM_getValue('player_width') + 20),
 				Height: (GM_getValue('player_height') + 70),
 				Content: content,
