@@ -1,36 +1,50 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset='utf-8'>
+    <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
-
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-
     <title>Bili fix player by NightlyFantasy</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/main.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
   </head>
-
   <body>
-    <header>
-      <div class="inner">
-        <h1>Bili fix player</h1>
-        <h2>修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载;注意： 遇到无法播放问题请关闭脚本 </h2>
-        <a href="https://github.com/NightlyFantasy/Bili_Fix_Player" class="button"><small>View project on</small>GitHub</a>
-      </div>
-    </header>
 
-    <div id="content-wrapper">
-      <div class="inner clearfix">
-        <section id="main-content">
-          <h1>
+      <header>
+        <h1>Bili fix player</h1>
+        <p>修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载;注意： 遇到无法播放问题请关闭脚本 </p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+
+        <a href="https://github.com/NightlyFantasy/Bili_Fix_Player" class="button fork"><strong>View On GitHub</strong></a>
+        <div class="downloads">
+          <span>Downloads:</span>
+          <ul>
+            <li><a href="https://github.com/NightlyFantasy/Bili_Fix_Player/zipball/master" class="button">ZIP</a></li>
+            <li><a href="https://github.com/NightlyFantasy/Bili_Fix_Player/tarball/master" class="button">TAR</a></li>
+          </ul>
+        </div>
+      </div><!-- end banner -->
+
+    <div class="wrapper">
+      <nav>
+        <ul></ul>
+      </nav>
+      <section>
+        <h1>
 <a name="%E7%82%B9%E6%88%91%E5%BF%AB%E9%80%9F%E5%AE%89%E8%A3%85%E8%84%9A%E6%9C%AC" class="anchor" href="#%E7%82%B9%E6%88%91%E5%BF%AB%E9%80%9F%E5%AE%89%E8%A3%85%E8%84%9A%E6%9C%AC"><span class="octicon octicon-link"></span></a><a href="https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js">点我快速安装脚本</a>
 </h1>
+
+<h2>
+<a name="%E7%94%B1%E4%BA%8Eb%E7%AB%99%E5%8F%AF%E4%BB%A5%E8%87%AA%E7%94%B1%E5%88%87%E6%8D%A2%E6%96%B0%E7%89%88%E6%97%A7%E7%89%88%E7%9A%84%E9%A6%96%E9%A1%B5%E5%A2%9E%E5%8A%A0%E5%AF%B9%E5%85%B6%E6%94%AF%E6%8C%81%E5%A2%9E%E5%8A%A0%E9%87%8D%E6%96%B0%E6%B8%B2%E6%9F%93%E5%BC%B9%E7%AA%97%E6%8C%89%E9%92%AE%E5%A6%82%E6%9E%9C%E5%8F%91%E7%8E%B0%E9%83%A8%E5%88%86%E5%88%97%E8%A1%A8%E6%97%A0%E5%BC%B9%E7%AA%97%E6%8C%89%E9%92%AE%E5%88%99%E7%82%B9%E5%87%BB" class="anchor" href="#%E7%94%B1%E4%BA%8Eb%E7%AB%99%E5%8F%AF%E4%BB%A5%E8%87%AA%E7%94%B1%E5%88%87%E6%8D%A2%E6%96%B0%E7%89%88%E6%97%A7%E7%89%88%E7%9A%84%E9%A6%96%E9%A1%B5%E5%A2%9E%E5%8A%A0%E5%AF%B9%E5%85%B6%E6%94%AF%E6%8C%81%E5%A2%9E%E5%8A%A0%E9%87%8D%E6%96%B0%E6%B8%B2%E6%9F%93%E5%BC%B9%E7%AA%97%E6%8C%89%E9%92%AE%E5%A6%82%E6%9E%9C%E5%8F%91%E7%8E%B0%E9%83%A8%E5%88%86%E5%88%97%E8%A1%A8%E6%97%A0%E5%BC%B9%E7%AA%97%E6%8C%89%E9%92%AE%E5%88%99%E7%82%B9%E5%87%BB"><span class="octicon octicon-link"></span></a>由于B站可以自由切换新版旧版的首页，增加对其支持（增加重新渲染弹窗按钮，如果发现部分列表无弹窗按钮则点击）</h2>
 
 <p>脚本新手若观看下面教程无法理解如何安装，可以参考田生大神的教程</p>
 
@@ -69,14 +83,19 @@
 <p>地址3[已经丢弃]：USO已经挂了，无法更新代码3.5.2，请使用下面的地址，顺便吐槽下USO，真是越来越垃圾</p>
 
 <h4>
-<a name="%E5%BD%93%E5%89%8D%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC%E4%B8%BA2014-07-23%E6%9B%B4%E6%96%B0%E7%9A%84%E7%89%88%E6%9C%AC364" class="anchor" href="#%E5%BD%93%E5%89%8D%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC%E4%B8%BA2014-07-23%E6%9B%B4%E6%96%B0%E7%9A%84%E7%89%88%E6%9C%AC364"><span class="octicon octicon-link"></span></a>当前最新版本为2014-07-23更新的版本3.6.4</h4>
+<a name="%E5%BD%93%E5%89%8D%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC%E4%B8%BA2014-09-06%E6%9B%B4%E6%96%B0%E7%9A%84%E7%89%88%E6%9C%AC371" class="anchor" href="#%E5%BD%93%E5%89%8D%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC%E4%B8%BA2014-09-06%E6%9B%B4%E6%96%B0%E7%9A%84%E7%89%88%E6%9C%AC371"><span class="octicon octicon-link"></span></a>当前最新版本为2014-09-06更新的版本3.7.1</h4>
 
 <p>你造吗？使用Github通道将最先获得最新版本</p>
 
-<h4>
-<a name="%E5%87%BA%E7%8E%B0%E6%97%A0%E6%B3%95%E6%92%AD%E6%94%BE%E6%83%85%E5%86%B5%E5%85%88%E5%85%B3%E9%97%AD%E8%87%AA%E5%8A%A8%E4%BF%AE%E5%A4%8D" class="anchor" href="#%E5%87%BA%E7%8E%B0%E6%97%A0%E6%B3%95%E6%92%AD%E6%94%BE%E6%83%85%E5%86%B5%E5%85%88%E5%85%B3%E9%97%AD%E8%87%AA%E5%8A%A8%E4%BF%AE%E5%A4%8D"><span class="octicon octicon-link"></span></a>出现无法播放情况先关闭自动修复</h4>
-
 <blockquote>
+<p>2014-09-06由于B站可以自由切换新版旧版的首页，增加对其支持（增加重新渲染弹窗按钮，如果发现部分列表无弹窗按钮则点击），同时恢复记录弹窗播放器垂直位置，为保证播放器不会不知所踪，设置垂直位置有极限值，超过此值域会被自动初始化；</p>
+
+<p>2014-09-04B站UI升级导致脚本失效，修复为临时版本，因为B站部分列表变成AJAX，脚本给ajax后的内容添加支持比较麻烦，等博主搬砖活干完，谢谢支持</p>
+
+<p>2014-08-15增加专题弹窗，移除对所有播放器都采用打开菜单时将视频移开的功能，需要360浏览器用户自己设置打开此功能</p>
+
+<p>2014-07-26弹窗因为本人技术问题无法完美解决，使用embed标签替换，可以网页全屏，但是关闭弹窗后会导致鼠标滚轮无效使用iframe标签无滚轮bug，但是因为跨域了，导致无法网页全屏#### 出现无法播放情况先关闭自动修复</p>
+
 <p>2014-07-23修复多数BUG</p>
 
 <p>2014-07-20修复小BUG，增加评论区移除和谐娘功能 当出现[此楼层已被用户隐藏 点击查看]时，自动展开，需要到脚本设置页面设置</p>
@@ -210,25 +229,13 @@
 <h3>
 <a name="bug%E5%8F%8D%E9%A6%88%E5%9C%B0%E5%9D%80" class="anchor" href="#bug%E5%8F%8D%E9%A6%88%E5%9C%B0%E5%9D%80"><span class="octicon octicon-link"></span></a><a href="http://bilili.ml/361.html">BUG反馈地址</a>
 </h3>
-        </section>
-
-        <aside id="sidebar">
-          <a href="https://github.com/NightlyFantasy/Bili_Fix_Player/zipball/master" class="button">
-            <small>Download</small>
-            .zip file
-          </a>
-          <a href="https://github.com/NightlyFantasy/Bili_Fix_Player/tarball/master" class="button">
-            <small>Download</small>
-            .tar.gz file
-          </a>
-
-          <p class="repo-owner"><a href="https://github.com/NightlyFantasy/Bili_Fix_Player"></a> is maintained by <a href="https://github.com/NightlyFantasy">NightlyFantasy</a>.</p>
-
-          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
-        </aside>
-      </div>
+      </section>
+      <footer>
+        <p>Project maintained by <a href="https://github.com/NightlyFantasy">NightlyFantasy</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></small></p>
+      </footer>
     </div>
-
-  
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
   </body>
 </html>
