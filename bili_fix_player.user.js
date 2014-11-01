@@ -4,7 +4,7 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.7.3
+// @version     3.8
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @require http://static.hdslb.com/js/jquery.min.js
@@ -17,6 +17,7 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
+2014-10-31  自动宽屏功能会自动强制替换视频，而且无论何种B站播放器都有效；重写了视频下载功能，因为原来的模糊视频接口坏了，此次修改成更加直观的下载
 2014-09-27移除记录弹窗播放器垂直位置功能(因为部分chrome用户老是反应播放器不知所踪),重构弹窗函数，修复弹窗函数多次运行导致分P列表重叠无法选择，博主采用了新的元素点击事件函数，从而使每个弹窗元素只有唯一一个点击事件，并修复了在火狐下视频播放页替换播放器后的网页全屏（chrome下无解，等待大神帮助），重新处理监听ajax产生的新数据，使用了贴吧大花猫的监听函数，因此可以无须点击左下角的【重新渲染按钮】，但是在部分机器可能有卡顿，如果觉得卡顿可以自行删除307行的代码即可，增加按需替换播放器选项【以前是一律强制替换】，自动宽屏在弹窗和视频页大型播放器下并且强制替换选项开启有效，按需替换则部分有效[因为是替换后的视频才有效]
 2014-09-15修复专题页导致按钮失效,在左侧下角增加一个【重新渲染弹窗按钮】,当部分地方没有弹窗按钮的时候，可以点击一下，然后应该有弹窗按钮了,新功能【视频页自动定位到播放器位置】,新功能【播放器自动宽屏[包括弹窗和视频页的播放器(大型)]】
 2014-09-06由于B站可以自由切换新版旧版的首页，增加对其支持（增加重新渲染弹窗按钮，如果发现部分列表无弹窗按钮则点击），同时恢复记录弹窗播放器垂直位置，为保证播放器不会不知所踪，设置垂直位置有极限值，超过此值域会被自动初始化；
@@ -72,18 +73,16 @@
 	//自动宽屏-来自牙刷科技冻猫
 	if (GM_getValue('auto_wide') == undefined) GM_setValue('auto_wide', 0);
 	//欢迎屏幕
-	var version = '3.7.3';
+	var version = '3.8';
 	var local_version = GM_getValue('version');
 	if (version != local_version) {
 		alert('\n\
-	0:感谢使用Bili Fix Player版本号3.7.3[20140927]，阅读以下说明将有助于你更好地使用脚本ーー（＾Ｕ＾）ノーーＹＯ\n\
-	1:重构弹窗函数，修复弹窗函数多次运行导致分P列表重叠无法选择，博主采用了新的元素点击事件函数，从而使每个弹窗元素只有唯一一个点击事件\n\
-	2:修复了在火狐下视频播放页替换播放器后的网页全屏（chrome下无解，等待大神帮助）\n\
-	3:【重要声明】:重新处理监听ajax产生的新数据，使用了贴吧大花猫的监听函数，因此可以无须点击左下角的【重新渲染按钮】，但是在部分机器可能有卡顿，如果觉得卡顿可以自行删除脚本307行的代码即可\n\
-	4:【重要声明】:增加按需修复播放器选项【以前是一律强制替换】，自动宽屏在弹窗和视频页大型播放器下并且强制修复选项开启有效，按需修复则部分有效[因为是替换后的视频才有效]\n\
-	5:移除记录弹窗播放器垂直位置功能(因为部分chrome用户老是反应播放器不知所踪)\n\
-	6:如果你发现BUG，可以随时提交给我。谢谢。http://bilili.ml/361.html\n\
-	7:感谢您的支持，我们下一版本再见！23333');
+	1:感谢使用Bili Fix Player版本号3.8[20141031]，阅读以下说明将有助于你更好地使用脚本ーー（＾Ｕ＾）ノーーＹＯ\n\
+	2:我重写了视频下载功能，因为原来的模糊视频接口坏了，此次修改成更加直观的下载\n\
+	3:现在，自动宽屏功能会自动强制替换视频，而且无论何种B站播放器都有效\n\
+	4:本脚本使用了B站的接口，有时候接口大姨妈会导致很久才出现甚至不出现，这不是本博问题，谢谢体谅\n\
+	5:如果你发现BUG，可以随时提交给我。谢谢。http://bilili.ml/361.html\n\
+	6:感谢您的支持，我们下一版本再见！23333,我会告诉乃们最近博主没事跑去给B站BGM填歌词(⊙_⊙)？哈哈哈博主才不会告诉乃们博主ID是绯色起源23333');
 		GM_setValue('version', version);
 	}
 	/**
@@ -93,7 +92,7 @@
 
 	function insert_html(type) {
 		var auto = GM_getValue('auto') ? '已打开' : '已关闭';
-		var fix_type = GM_getValue('fix_type') ? '当前按需修复[自动宽屏部分视频有效]' : '当前强制修复[即使是B站播放器,自动宽屏有效]';
+		var fix_type = GM_getValue('fix_type') ? '当前按需修复[自动宽屏部分视频有效]' : '当前强制修复[全部B站播放器自动宽屏有效]';
 		var player_size = GM_getValue('player_size') ? '大型' : '小型';
 		var display = GM_getValue('pagebox_display') ? '悬浮' : '默认';
 		var harm = GM_getValue('pagebox_harm') ? '和谐娘打酱油中' : '默认[和谐娘和谐中]';
@@ -108,15 +107,16 @@
 						<li><a>修复模式(修改后请刷新页面):<bl id="fix-type" class="bfpbtn">' + fix_type + '</bl></a><em></em></li>\
 						<li><a target="_blank" href="http://bilili.ml/361.html">若无限小电视则尝试关闭修复-BUG反馈</a><em></em></li>\
 						<li><a>本页视频源:<bl style="color:#F489AD">' + type + '</bl></a><em></em></li>\
-						<li><a class="font">高清视频下载</a><div class="m_num" id="av_source">\
+						<li><a class="font">视频下载[来自B站接口,点击即可,切勿右键]</a><div class="m_num" id="av_source" cid="">\
+						<a  id="hd_av_download">高清画质</a>\
+						<a  id="ld_av_download">渣画质</a>\
 						</div><em></em></li>\
-						<li><a class="font" target="_blank" id="aid_down_av">单文件[模糊]视频下载</a><em></em></li>\
 						<li><a id="down_cid_xml" target="_blank">弹幕下载</a><em></em></li>\
 						<li><a class="font">播放器大小(小型在火狐弹窗无BUG):<bl id="player_size" class="bfpbtn">' + player_size + '</bl></a><em></em></li>\
 						<li><a>评论区分页导航:<bl id="pagebox-display" class="bfpbtn">' + display + '</bl></a><em></em></li>\
 						<li><a>评论区和谐娘:<bl id="pagebox-harm" class="bfpbtn">' + harm + '</bl></a><em></em></li>\
 						<li><a>视频页自动定位到播放器位置:<bl id="auto-locate" class="bfpbtn">' + auto_locate + '</bl></a><em></em></li>\
-						<li><a>播放器自动宽屏[弹窗、视频页的播放器(大型),需配合选项修复模式<强制修复>]:<bl id="auto-wide" class="bfpbtn">' + auto_wide + '</bl></a><em></em></li>\
+						<li><a>播放器自动宽屏[自动切换成强制修复]:<bl id="auto-wide" class="bfpbtn">' + auto_wide + '</bl></a><em></em></li>\
 						<li><a id="bili_set_status">就绪中→_→</a><em></em></li>\
 						</ul>\
 						<span class="addnew_5">+10086</span></div>';
@@ -146,13 +146,50 @@
 		//修复模式
 		var bfpbtn = document.querySelector("#fix-type");
 		bfpbtn.addEventListener("click", action_fix_type, false);
+		//下载高清
+		var bfpbtn = document.querySelector("#hd_av_download");
+		bfpbtn.addEventListener("click", function (){download_bili_av('HD')}, false);
+		//下载渣画质
+		var bfpbtn = document.querySelector("#ld_av_download");
+		bfpbtn.addEventListener("click",  function (){download_bili_av('LD')}, false);
 	}
+	//下载
+	function download_bili_av(type){
+	if($('#av_source').attr('cid')==''){
+	alert('错误，请再试一次，多次错误请报修');
+	}else{
+	var cid=$('#av_source').attr('cid');
+	if(type=='HD'){
+	var url = 'http://interface.bilibili.com/playurl?appkey=0a99fa1d87fdd38c&platform=android&quality=2&cid='+cid+'&otype=json&platform=android';
+	}else{
+	var url = 'http://interface.bilibili.com/playurl?platform=android&cid='+cid+'&quality=1&otype=json&appkey=0a99fa1d87fdd38c&type=mp4';
+	}
+		GM_xmlhttpRequest({
+			method: 'GET',
+			url: url,
+			synchronous: false,
+			onload: function(responseDetails) {
+				if (responseDetails.status == 200) {
+					var content=responseDetails.responseText;
+					var c= eval('(' + content + ')');
+					var durl=(c.durl)[0]['url'];
+					if(durl!=undefined){
+					window.location.href=durl;}else{
+					alert('错误，请再试一次,多次错误请报修');
+					}
+					//console.log(content,c);
+					//console.log(durl);
+					}
+				}
+		});
+	}
+	}
+	
+	//函数，插入下载按钮 20141031 接口更换成json
 
-	//函数，插入下载按钮
-
-	function insert_download_button(url, count) {
+/* 	function insert_download_button(url, count) {
 		$('#av_source').append('<a href="' + url + '" target="blank">分段【' + count + '】</a>');
-	}
+	} */
 
 	//设置参数
 	//修复按钮事件
@@ -215,7 +252,10 @@
 
 	function action_auto_wide() {
 		GM_getValue('auto_wide') ? GM_setValue('auto_wide', 0) : GM_setValue('auto_wide', 1);
-		var s = GM_getValue('auto_wide') ? '已打开,请刷新' : '已关闭，请刷新';
+		var s = GM_getValue('auto_wide') ? '已打开,且自动开启强制修复模式,请刷新' : '已关闭，请按自己需要是否关闭强制修复模式，请刷新';
+		if(GM_getValue('auto_wide')){
+		GM_setValue('fix_type', 0);
+		}
 		document.getElementById('auto-wide').innerHTML = s;
 		$("#auto-wide").toggleClass("active");
 		$('#bili_set_status').html('<bl class="bfpbtn notice font">已更改,刷新生效_(:3」∠)_</bl>');
@@ -236,15 +276,14 @@
 
 	function Replace_player(aid, cid) {
 		if (GM_getValue('auto') == '1') {
-
-			if (GM_getValue('player_size') == '1') {
-				//document.getElementById('bofqi').innerHTML = '<embed id="bofqi_embed" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window">';
 				var wide = '';
 				if (GM_getValue('auto_wide') == 1) var wide = '&as_wide=1';
+			if (GM_getValue('player_size') == '1') {
+				//document.getElementById('bofqi').innerHTML = '<embed id="bofqi_embed" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window">';
 				document.getElementById('bofqi').innerHTML = '<iframe class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + wide + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="482" width="950"></iframe>';
 				fix_sp_player_fullwin();
 			} else {
-				document.getElementById('bofqi').innerHTML = '<embed id="bofqi_embed" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&amp;aid=' + aid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" style="width:100%;height:100%">';
+				document.getElementById('bofqi').innerHTML = '<embed id="bofqi_embed" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&aid=' + aid + wide + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" style="width:100%;height:100%">';
 				$('#bofqi').css({
 					width: "960px",
 					height: "520px"
@@ -298,9 +337,9 @@
 						if (GM_getValue('auto_locate') == 1) $('html,body').animate({
 							scrollTop: $("#bofqi_embed,#bofqi").offset().top - 30
 						}, 500);
-						cid_get_videodown_hd(cid); //获取高清下载链接
-						aid_down_av(aid, page); //av画质下载（单文件）
-
+						//cid_get_videodown_hd(cid); //获取高清下载链接 20141031 接口更换成json
+						//aid_down_av(aid, page); //av画质下载（单文件） ---201410 接口坏
+							$('#av_source').attr('cid',cid);//给av_source设置cid
 					} else {
 						window_player_init(); //执行弹窗函数
 						addNodeInsertedListener('.vidbox.v-list li a,.bgm-calendar.bgmbox li a,.rlist li a,.rm-list li a,.r-list li a,.top-list li a,.vidbox.zt  .t', function() {
@@ -436,9 +475,9 @@
 		if (GM_getValue('auto_wide') == 1) var wide = '&as_wide=1';
 		return '<iframe  id="window-player" class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + wide + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="' + height + '" width="' + width + '"></iframe>'; //
 	}
-	//cid获取高清视频链接
+	//cid获取高清视频链接 --20141031 接口更换成json
 
-	function cid_get_videodown_hd(cid) {
+/* 	function cid_get_videodown_hd(cid) {
 		var url = 'http://interface.bilibili.com/playurl?appkey=0a99fa1d87fdd38c&platform=android&quality=2&cid=' + cid;
 		GM_xmlhttpRequest({
 			method: 'GET',
@@ -456,10 +495,10 @@
 				}
 			}
 		});
-	}
-	//低画质视频下载（单文件）
+	} */
+	//低画质视频下载（单文件）---201410 接口坏
 
-	function aid_down_av(aid, page) {
+/* 	function aid_down_av(aid, page) {
 		var url = 'http://www.bilibili.com/m/html5?aid=' + aid + '&page=' + page;
 		GM_xmlhttpRequest({
 			method: 'GET',
@@ -473,7 +512,7 @@
 				}
 			}
 		});
-	}
+	} */
 
 	/**
 -------------------------------控制 Control-------------------------------------
