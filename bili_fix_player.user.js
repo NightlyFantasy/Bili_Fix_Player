@@ -4,7 +4,7 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.8.1
+// @version     3.8.2
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @require http://static.hdslb.com/js/jquery.min.js
@@ -17,6 +17,7 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
+2014-12-08重新兼容火狐魔镜，重新修复部分乐视源只播广告，采用改版bili播放器，弹窗分P列表标题显示
 2014-11-25 博主太懒啊很多小功能修复不了(技术原因也有),本次只修复了视频下载有分段的情况和治疗下部分乐视源弹窗播放广告不播视频,博主无面向对象编程经验，此次更新尝试了部分类的写法，感觉萌(bu)萌(hui)哒(xie)。
 2014-10-31  自动宽屏功能会自动强制替换视频，而且无论何种B站播放器都有效；重写了视频下载功能，因为原来的模糊视频接口坏了，此次修改成更加直观的下载
 2014-09-27移除记录弹窗播放器垂直位置功能(因为部分chrome用户老是反应播放器不知所踪),重构弹窗函数，修复弹窗函数多次运行导致分P列表重叠无法选择，博主采用了新的元素点击事件函数，从而使每个弹窗元素只有唯一一个点击事件，并修复了在火狐下视频播放页替换播放器后的网页全屏（chrome下无解，等待大神帮助），重新处理监听ajax产生的新数据，使用了贴吧大花猫的监听函数，因此可以无须点击左下角的【重新渲染按钮】，但是在部分机器可能有卡顿，如果觉得卡顿可以自行删除307行的代码即可，增加按需替换播放器选项【以前是一律强制替换】，自动宽屏在弹窗和视频页大型播放器下并且强制替换选项开启有效，按需替换则部分有效[因为是替换后的视频才有效]
@@ -59,6 +60,7 @@
 		if (GM_getValue('version') == undefined) GM_setValue('version', 1); //版本号
 		if (GM_getValue('auto') == undefined) GM_setValue('auto', 1);
 		if (GM_getValue('fix_type') == undefined) GM_setValue('fix_type', 1); //按需修复;强制修复
+		if (GM_getValue('fix_firefox') == undefined) GM_setValue('fix_firefox', 0); //默认关闭修复火狐魔镜
 		if (GM_getValue('player_size') == undefined) GM_setValue('player_size', 1);
 		if (GM_getValue('pagebox_display') == undefined) GM_setValue('pagebox_display', 0);
 		if (GM_getValue('pagebox_harm') == undefined) GM_setValue('pagebox_harm', 0);
@@ -77,16 +79,16 @@
 		GM_setValue('init', 1);
 	}
 	//欢迎屏幕
-	var version = '3.8.1';
+	var version = '3.8.2';
 	var local_version = GM_getValue('version');
 	if (version != local_version) {
 	alert('\n\
-	1:感谢使用Bili Fix Player版本号3.8.1[20141125]，阅读以下说明将有助于你更好地使用脚本\n\
-	2:修复了视频下载有分段的情况\n\
-	3:治疗下部分乐视源弹窗播放广告不播视频，此时点击下治疗按钮即可(改版播放器来自网络)\n\
-	4:博主无面向对象编程经验，此次更新尝试了部分类的写法，感觉萌(bu)萌(hui)哒(xie)\n\
+	1:感谢使用Bili Fix Player版本号3.8.2[20141208]，阅读以下说明将有助于你更好地使用脚本\n\
+	2:修复了治疗下部分乐视源弹窗播放广告不播视频[如古剑奇谭]，此时点击下治疗按钮即可(改版播放器来自网络)，注(修复上一版本播放器无效，博主大意了)\n\
+	3:给弹窗列表增加标题，方便选择[示例，http://www.bilibili.com/sp/YOU下里面的[修正43P]YOU 合集弹窗]\n\
+	4:增加火狐魔镜弹窗兼容，方便缩小窗口看电视剧（泥垢！其实是博主自己看电视剧\(^o^)/~，以前从来不看的，周末不上班啊实在无聊啊没有妹纸啊就看电视剧啊）\n\
 	5:如果你发现BUG，可以随时提交给我。谢谢。http://bilili.ml/361.html\n\
-	6:感谢您的支持，我们下一版本再见！吐槽(博主作大死做字幕菌被封2333)');
+	6:感谢您的支持，我们下一版本再见！');
 	GM_setValue('version', version);
 	}
 	/**
@@ -98,6 +100,7 @@
 		var auto = GM_getValue('auto') ? '已打开' : '已关闭';
 		var fix_type = GM_getValue('fix_type') ? '当前按需修复[自动宽屏部分视频有效]' : '当前强制修复[全部B站播放器自动宽屏有效]';
 		var player_size = GM_getValue('player_size') ? '大型' : '小型';
+		var fix_firefox = GM_getValue('fix_firefox') ? '已开启兼容火狐魔镜' : '已关闭兼容火狐魔镜';
 		var display = GM_getValue('pagebox_display') ? '悬浮' : '默认';
 		var harm = GM_getValue('pagebox_harm') ? '和谐娘打酱油中' : '默认[和谐娘和谐中]';
 		var init360 = GM_getValue('init360') ? '已打开' : '已关闭';
@@ -108,6 +111,7 @@
 						<ul class="i_num i_num_a blborder" id="bili_fix_script">\
 						<li><a>360浏览器兼容[非360勿开]:<bl id="init360" class="bfpbtn">' + init360 + '</bl></a><em></em></li>\
 						<li><a>自动修复(修改后请刷新页面):<bl id="bili_fix" class="bfpbtn">' + auto + '</bl></a><em></em></li>\
+						<li><a>兼容火狐魔镜[开启后大小播放器将无效且自动开启强制修复]:<bl id="fix_firefox" class="bfpbtn">' + fix_firefox + '</bl></a><em></em></li>\
 						<li><a>修复模式(修改后请刷新页面):<bl id="fix-type" class="bfpbtn">' + fix_type + '</bl></a><em></em></li>\
 						<li><a target="_blank" href="http://bilili.ml/361.html">若无限小电视则尝试关闭修复-BUG反馈</a><em></em></li>\
 						<li><a>本页视频源:<bl style="color:#F489AD">' + type + '</bl></a><em></em></li>\
@@ -128,6 +132,8 @@
 		$('li.m-i:nth-child(1) > a:nth-child(1)').prop('outerHTML', div);
 		//监听修复按钮
 		event_control.Listener('#bili_fix', 'auto', '已打开', '已关闭');
+		//监听兼容火狐魔镜
+		event_control.Listener('#fix_firefox', 'fix_firefox', '已开启兼容火狐魔镜', '已关闭兼容火狐魔镜');
 		//监听播放器大小按钮
 		event_control.Listener('#player_size', 'player_size', '大型', '小型');
 		//监听评论分页功能显示切换
@@ -216,20 +222,24 @@
 	//函数，替换播放器
 
 	function Replace_player(aid, cid) {
-		if (GM_getValue('auto') == '1') {
-			var wide = '';
-			if (GM_getValue('auto_wide') == 1) var wide = '&as_wide=1';
-			if (GM_getValue('player_size') == '1') {
-				document.getElementById('bofqi').innerHTML = '<iframe class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + wide + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="482" width="950"></iframe>';
-				fix_player_fullwin.fix_page();
-			} else {
-				document.getElementById('bofqi').innerHTML = '<embed id="bofqi_embed" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&aid=' + aid + wide + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" style="width:100%;height:100%">';
-				$('#bofqi').css({
-					width: "960px",
-					height: "520px"
-				});
-			}
+	if (GM_getValue('auto') == '1') {
+	var wide = '';
+	if (GM_getValue('auto_wide') == 1) var wide = '&as_wide=1';
+	if (GM_getValue('fix_firefox') != '1') {
+		if (GM_getValue('player_size') == '1') {
+			document.getElementById('bofqi').innerHTML = '<iframe class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + wide + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="482" width="950"></iframe>';
+			fix_player_fullwin.fix_page();
+		} else {
+			document.getElementById('bofqi').innerHTML = '<embed id="bofqi_embed" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&aid=' + aid + wide + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" style="width:100%;height:100%">';
+			$('#bofqi').css({
+				width: "960px",
+				height: "520px"
+			});
 		}
+	} else {
+		document.getElementById('bofqi').outerHTML = '<embed id="bofqi_embed" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&aid=' + aid + wide + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" height="520" width="960">';
+	}
+	}
 	}
 	//api获取cid
 
@@ -305,15 +315,20 @@
 						var p = 0;
 						var lp = (list[p] == undefined) ? list[0] : list[p];
 						var cid = lp.cid;
-						$('#player_content').html(window_player.
-							default (aid, cid));
+						if(GM_getValue('fix_firefox') != '1') {
+							$('#player_content').html(window_player.
+								default (aid, cid));							
+						}else{
+							$('#player_content').html(window_player.fix_firefox(aid, cid));
+						}
 						$('#div_fix_letv_button').attr('aid', aid);
 						$('#div_fix_letv_button').attr('cid', cid);
 						//分P列表和播放器------------------------------
 						for (var i in list) {
 							var cid = list[i].cid;
 							var p = parseInt(i) + 1;
-							$('#window_play_list').append('<li class="single_play_list" data-field="aid=' + aid + '&cid=' + cid + '"><a  href="javascript:void(0);" style="color:#00A6D8;" >' + p + 'P</a></li>');
+							var title= list[i].part;
+							$('#window_play_list').append('<li class="single_play_list" data-field="aid=' + aid + '&cid=' + cid + '"><a  href="javascript:void(0);" style="color:#00A6D8;" >[' + p + 'p]'+title+'</a></li>');
 						}
 						if (!unsafeWindow.player_fullwin) setTimeout(fix_player_fullwin.fix_window, 0);
 						//弹窗的分P播放
@@ -328,8 +343,13 @@
 								$('#div_fix_letv_button').attr('aid', aid);
 								$('#div_fix_letv_button').attr('cid', cid);
 								setTimeout(function() {
+								if(GM_getValue('fix_firefox') != '1') {
 									$('#player_content').html(window_player.
-										default (aid, cid));
+										default (aid, cid));							
+								}else{
+									$('#player_content').html(window_player.
+										fix_firefox(aid, cid));
+								}
 								}, 0);
 							});
 					} else {
@@ -470,7 +490,7 @@
 			creat(title_html, a); //创建可视化窗口
 			$('.dialogcontainter').after(list_html);
 			$('#window_play_info').html('正在播放第<span style="color:#DB5140">1P</span>');
-			$('#window_play_title').html('<p><a id="div_positon_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #E54C7E;">固定播放器</a><a id="list_control_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #0CB3EE;">收缩分P列表[在左边]</a><a id="div_fix_letv_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #ED6A4C;">点我专治乐视源不服(乐视源只播广告的情况请点击)</a>[拖动标题可移动播放器，拖动右下角可改变播放器大小，设置后自动保存宽高和位置]</p>');
+			$('#window_play_title').html('<p><a id="div_positon_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #E54C7E;">固定播放器</a><a id="list_control_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #0CB3EE;">收缩分P列表[在左边]</a><a id="div_fix_letv_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #ED6A4C;">点我专治乐视源不服(乐视源只播广告的情况请点击)</a>[拖动标题可移动播放器，拖动右下角可改变播放器大小，设置后自动保存宽高和位置]。注意：如果需要使用火狐魔镜，需要在设置里面开启兼容火狐魔镜，并在点击魔镜分离播放器前拖拽改变播放器大小，并点击固定播放器，弹窗即可正常</p>');
 			//切换分P按钮
 			$('#list_control_button').click(function() {
 				var flag = $(".player-list").css("display");
@@ -569,7 +589,7 @@
 		Control: function(config_val, selector, notice1, notice2) {
 			GM_getValue(config_val) ? GM_setValue(config_val, 0) : GM_setValue(config_val, 1);
 			var s = GM_getValue(config_val) ? notice1 : notice2;
-			if (config_val == 'auto_wide' && GM_getValue('auto_wide')) {
+			if ((config_val == 'auto_wide' && GM_getValue('auto_wide'))||(config_val == 'fix_firefox' && GM_getValue('fix_firefox'))) {
 				GM_setValue('fix_type', 0);
 			}
 			$(selector).html(s);
@@ -590,9 +610,13 @@
 			window_player.init(aid, cid);
 			return '<iframe  id="window-player" class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + this.wide + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="' + this.height + '" width="' + this.width + '"></iframe>';
 		},
+		fix_firefox: function(aid, cid) {
+			window_player.init(aid, cid);
+			return '<embed id="window-player" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&aid=' + aid + this.wide + '" src="https://static-s.bilibili.tv/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" height="' + this.height + '" width="' + this.width + '">';
+		},
 		fix_letv: function(aid, cid) {
 			window_player.init(aid, cid);
-			return '<embed id="window-player" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&aid=' + aid + this.wide + '" src="https://nightlyfantasy.github.io/Bili_Fix_Player/player.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" style="width:' + this.width + 'px;height:' + this.height + 'px">';
+			return '<embed id="window-player" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&aid=' + aid + this.wide + '" src="https://nightlyfantasy.github.io/Bili_Fix_Player/biliplus/player.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" height="' + this.height + '" width="' + this.width + '">';
 		}
 	};
 	
@@ -640,280 +664,28 @@
 	}; 
 
 	//css插入
-	var css = '#load_manual_window,.dialogcontainter{text-align:center;}#load_manual_window{z-index:300;width:30px;cursor: pointer;left:40px;bottom:50px;position:fixed;padding: 0px 0px 10px;transition: all 0.1s linear 0s;background: none repeat scroll 0% 0% rgba(0, 0, 0, 0.5);color: #FFF;border: medium none;}#load_manual_window:hover{background-color: rgba(0, 0, 0, 0.7);}.singleplaybtn{cursor:pointer;box-shadow: 0px 1px 1px rgba(34, 25, 25, 0.4);background:none repeat scroll 0% 0% #684D75!important;border-radius: 4px;line-height: 14px;padding: 1px 3px;text-align: center;font-family: Calibri;font-size: 12px;min-width: 18px;}.bfpbtn{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 2px;transition-property:#000,color;transition-duration:0.3s;box-shadow:none;color:#FFF;text-shadow:none;border:medium none;background:none repeat scroll 0% 0% #00A1CB!important;}.bfpbtn.active{background:none repeat scroll 0% 0%  #F489AD!important;}.bfpbtn.notice{background-color:#A300C0!important;}.font{font-size:11px!important;}#window_play_list li{float:left;position:relative;width:5em;border:1px solid #B0C4DE;font:80% Verdana,Geneva,Arial,Helvetica,sans-serif;}.ui.corner.label{height:0px;border-width:0px 3em 3em 0px;border-style:solid;border-top:0px solid transparent;border-bottom:3em solid transparent;border-left:0px solid transparent;border-right-color:rgb(217,92,92)!important;transition:border-color 0.2s ease 0s;position:absolute;content:"";right:0px;top:0px;z-index:-1;width:0px;}.ui.corner.label i{display:inline-block;margin:3px 0.25em 0px 17px;width:1.23em;height:1em;font-weight:800!important;}.dialogcontainter{z-index:99999!important;height:400px;width:400px;border:1px solid #14495f;position:fixed;font-size:13px;}.dialogtitle{height:26px;width:auto;background-color:#C6C6C6;}.dialogtitleinfo{float:left;height:20px;margin-top:2px;margin-left:10px;line-height:20px;vertical-align:middle;color:#FFFFFF;font-weight:bold;}.dialogtitleico{float:right;height:20px;width:21px;margin-top:2px;margin-right:5px;text-align:center;line-height:20px;vertical-align:middle;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-21px 0px}.dialogbody{padding:10px;width:auto;background-color:#FFFFFF;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}.dialogbottom{bottom:1px;right:1px;cursor:nw-resize;position:absolute;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-42px -10px;width:10px;height:10px;font-size:0;}.button-small{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 5px;}.button-flat-action{transition-duration:0.3s;box-shadow:none;background:none repeat scroll 0% 0% #7DB500;color:#FFF!important;text-shadow:none;border:medium none;border-radius:3px;}.player-list{box-shadow: 3px 3px 13px rgba(34, 25, 25, 0.4);position:fixed;z-index:1000;left:10px;top:50px;width:400px!important;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");min-height:200px!Important;}#player_content{position:absolute;top:60px;left:10px;right:10px;bottom:10px;}#window-player{bottom:0;height:100%;left:0;right:0;top:0;width:100%;}a.single_player{display:none;}a:hover .single_player{display:inline;}#bofqi_embed.hide,#bofqi.hide,#player_content.hide{margin-left:3000px!important;transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}#bofqi_embed,#bofqi,#player_content{transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}';
+	var css = '#load_manual_window,.dialogcontainter{text-align:center;}#load_manual_window{z-index:300;width:30px;cursor: pointer;left:40px;bottom:50px;position:fixed;padding: 0px 0px 10px;transition: all 0.1s linear 0s;background: none repeat scroll 0% 0% rgba(0, 0, 0, 0.5);color: #FFF;border: medium none;}#load_manual_window:hover{background-color: rgba(0, 0, 0, 0.7);}.singleplaybtn{cursor:pointer;box-shadow: 0px 1px 1px rgba(34, 25, 25, 0.4);background:none repeat scroll 0% 0% #684D75!important;border-radius: 4px;line-height: 14px;padding: 1px 3px;text-align: center;font-family: Calibri;font-size: 12px;min-width: 18px;}.bfpbtn{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 2px;transition-property:#000,color;transition-duration:0.3s;box-shadow:none;color:#FFF;text-shadow:none;border:medium none;background:none repeat scroll 0% 0% #00A1CB!important;}.bfpbtn.active{background:none repeat scroll 0% 0%  #F489AD!important;}.bfpbtn.notice{background-color:#A300C0!important;}.font{font-size:11px!important;}#window_play_list li{float:left;position:relative;width:30em;border-bottom:1px solid #B0C4DE;font:100% Verdana,Geneva,Arial,Helvetica,sans-serif;}.ui.corner.label{height:0px;border-width:0px 3em 3em 0px;border-style:solid;border-top:0px solid transparent;border-bottom:3em solid transparent;border-left:0px solid transparent;border-right-color:rgb(217,92,92)!important;transition:border-color 0.2s ease 0s;position:absolute;content:"";right:0px;top:0px;z-index:-1;width:0px;}.ui.corner.label i{display:inline-block;margin:3px 0.25em 0px 17px;width:1.23em;height:1em;font-weight:800!important;}.dialogcontainter *{z-index:9999!important;}.dialogcontainter{height:400px;width:400px;border:1px solid #14495f;position:fixed;font-size:13px;}.dialogtitle{height:26px;width:auto;background-color:#C6C6C6;}.dialogtitleinfo{float:left;height:20px;margin-top:2px;margin-left:10px;line-height:20px;vertical-align:middle;color:#FFFFFF;font-weight:bold;}.dialogtitleico{float:right;height:20px;width:21px;margin-top:2px;margin-right:5px;text-align:center;line-height:20px;vertical-align:middle;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-21px 0px}.dialogbody{padding:10px;width:auto;background-color:#FFFFFF;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}.dialogbottom{bottom:1px;right:1px;cursor:nw-resize;position:absolute;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-42px -10px;width:10px;height:10px;font-size:0;}.button-small{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 5px;}.button-flat-action{transition-duration:0.3s;box-shadow:none;background:none repeat scroll 0% 0% #7DB500;color:#FFF!important;text-shadow:none;border:medium none;border-radius:3px;}.player-list{box-shadow: 3px 3px 13px rgba(34, 25, 25, 0.4);position:fixed;z-index:1000;left:10px;top:50px;width:400px!important;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");min-height:200px;max-height:400px;overflow: auto;}#player_content{position:absolute;top:80px;left:10px;right:10px;bottom:10px;}#window-player{bottom:0;height:100%;left:0;right:0;top:0;width:100%;}a.single_player{display:none;}a:hover .single_player{display:inline;}#bofqi_embed.hide,#bofqi.hide,#player_content.hide{margin-left:3000px!important;transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}#bofqi_embed,#bofqi,#player_content{transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}';
 	GM_addStyle(css);
 
-	//高大上的拖动DIV和改变DIV大小功能，来自互联网脚本之家www.jb51.net
-	var z = 1,
-		i = 1,
-		left = 10;
-	var isIE = (document.all) ? true : false;
-	var Extend = function(destination, source) {
-		for (var property in source) {
-			destination[property] = source[property];
-		}
-	}
-
-	var Bind = function(object, fun, args) {
-		return function() {
-			return fun.apply(object, args || []);
-		}
-	}
-
-	var BindAsEventListener = function(object, fun) {
-		var args = Array.prototype.slice.call(arguments).slice(2);
-		return function(event) {
-			return fun.apply(object, [event || window.event].concat(args));
-		}
-	}
-
-	var CurrentStyle = function(element) {
-		return element.currentStyle || document.defaultView.getComputedStyle(element, null);
-	}
-
-		function create(elm, parent, fn) {
-			var element = document.createElement(elm);
-			fn && fn(element);
-			parent && parent.appendChild(element);
-			return element
-		};
-
-	function addListener(element, e, fn) {
-		element.addEventListener ? element.addEventListener(e, fn, false) : element.attachEvent("on" + e, fn)
-	};
-
-	function removeListener(element, e, fn) {
-		element.removeEventListener ? element.removeEventListener(e, fn, false) : element.detachEvent("on" + e, fn)
-	};
-
-	var Class = function(properties) {
-		var _class = function() {
-			return (arguments[0] !== null && this.initialize && typeof(this.initialize) == 'function') ? this.initialize.apply(this, arguments) : this;
-		};
-		_class.prototype = properties;
-		return _class;
-	};
-
-	var Dialog = new Class({
-		options: {
-			Width: 400,
-			Height: 400,
-			Left: 100,
-			Top: 10,
-			Titleheight: 26,
-			Minwidth: 200,
-			Minheight: 200,
-			CancelIco: true,
-			ResizeIco: true,
-			Info: "标题",
-			Content: "无内容",
-			Zindex: 2
-		},
-		initialize: function(options) {
-			this._dragobj = null;
-			this._resize = null;
-			this._cancel = null;
-			this._body = null;
-			this._x = 0;
-			this._y = 0;
-			this._fM = BindAsEventListener(this, this.Move);
-			this._fS = Bind(this, this.Stop);
-			this._isdrag = null;
-			this._Css = null;
-			//////////////////////////////////////////////////////////////////////////////// 
-			this.Width = this.options.Width;
-			this.Height = this.options.Height;
-			this.Left = this.options.Left;
-			this.Top = this.options.Top;
-			this.CancelIco = this.options.CancelIco;
-			this.Info = this.options.Info;
-			this.Content = this.options.Content;
-			this.Minwidth = this.options.Minwidth;
-			this.Minheight = this.options.Minheight;
-			this.Titleheight = this.options.Titleheight;
-			this.Zindex = this.options.Zindex;
-			Extend(this, options);
-			Dialog.Zindex = this.Zindex
-			//////////////////////////////////////////////////////////////////////////////// 构造dialog 
-			var obj = ['dialogcontainter', 'dialogtitle', 'dialogtitleinfo', 'dialogtitleico', 'dialogbody', 'dialogbottom'];
-			for (var i = 0; i < obj.length; i++) {
-				obj[i] = create('div', null, function(elm) {
-					elm.className = obj[i];
-				});
-			}
-			obj[2].innerHTML = this.Info;
-			obj[4].innerHTML = this.Content;
-			obj[1].appendChild(obj[2]);
-			obj[1].appendChild(obj[3]);
-			obj[0].appendChild(obj[1]);
-			obj[0].appendChild(obj[4]);
-			obj[0].appendChild(obj[5]);
-			document.body.appendChild(obj[0]);
-			this._dragobj = obj[0];
-			this._resize = obj[5];
-			this._cancel = obj[3];
-			this._body = obj[4];
-			////////////////////////////////////////////////////////////////////////////////o,x1,x2 
-			////设置Dialog的长 宽 ,left ,top 
-			with(this._dragobj.style) {
-				height = this.Height + "px";
-				top = this.Top + "px";
-				width = this.Width + "px";
-				left = this.Left + "px";
-				zIndex = this.Zindex;
-			}
-			this._body.style.height = this.Height - this.Titleheight - parseInt(CurrentStyle(this._body).paddingLeft) * 2 + 'px';
-			/////////////////////////////////////////////////////////////////////////////// 添加事件 
-			addListener(this._dragobj, 'mousedown', BindAsEventListener(this, this.Start, true));
-			addListener(this._cancel, 'mouseover', Bind(this, this.Changebg, [this._cancel, '0px 0px', '-21px 0px']));
-			addListener(this._cancel, 'mouseout', Bind(this, this.Changebg, [this._cancel, '0px 0px', '-21px 0px']));
-			addListener(this._cancel, 'mousedown', BindAsEventListener(this, this.Disappear));
-			addListener(this._body, 'mousedown', BindAsEventListener(this, this.Cancelbubble));
-			addListener(this._resize, 'mousedown', BindAsEventListener(this, this.Start, false));
-		},
-		Disappear: function(e) {
-			this.Cancelbubble(e);
-			document.body.removeChild(this._dragobj);
-			$('.player-list').remove();
-		},
-		Cancelbubble: function(e) {
-			this._dragobj.style.zIndex = ++Dialog.Zindex;
-			document.all ? (e.cancelBubble = true) : (e.stopPropagation())
-		},
-		Changebg: function(o, x1, x2) {
-			o.style.backgroundPosition = (o.style.backgroundPosition == x1) ? x2 : x1;
-		},
-		Start: function(e, isdrag) {
-			if (!isdrag) {
-				this.Cancelbubble(e);
-			}
-			this._Css = isdrag ? {
-				x: "left",
-				y: "top"
-			} : {
-				x: "width",
-				y: "height"
-			}
-			this._dragobj.style.zIndex = ++Dialog.Zindex;
-			this._isdrag = isdrag;
-			this._x = isdrag ? (e.clientX - this._dragobj.offsetLeft || 0) : (this._dragobj.offsetLeft || 0);
-			this._y = isdrag ? (e.clientY - this._dragobj.offsetTop || 0) : (this._dragobj.offsetTop || 0);
-			if (isIE) {
-				addListener(this._dragobj, "losecapture", this._fS);
-				this._dragobj.setCapture();
-			} else {
-				e.preventDefault();
-				addListener(window, "blur", this._fS);
-			}
-			addListener(document, 'mousemove', this._fM);
-			addListener(document, 'mouseup', this._fS);
-			if (GM_getValue('init360') == 1) $("#player_content").addClass("hide");
-		},
-		Move: function(e) {
-			window.getSelection ? window.getSelection().removeAllRanges() : document.selection.empty();
-			var i_x = e.clientX - this._x,
-				i_y = e.clientY - this._y;
-			this._dragobj.style[this._Css.x] = (this._isdrag ? Math.max(i_x, 0) : Math.max(i_x, this.Minwidth)) + 'px';
-			this._dragobj.style[this._Css.y] = (this._isdrag ? Math.max(i_y, 0) : Math.max(i_y, this.Minheight)) + 'px'
-			if (!this._isdrag)
-				this._body.style.height = Math.max(i_y - this.Titleheight, this.Minheight - this.Titleheight) - 2 * parseInt(CurrentStyle(this._body).paddingLeft) + 'px';
-		},
-		Stop: function() {
-			$("#player_content").removeClass("hide");
-			removeListener(document, 'mousemove', this._fM);
-			removeListener(document, 'mouseup', this._fS);
-			//实时改变播放器大小，保存播放器大小
-			//$('#window-player').width($('.dialogcontainter').width() - 20);
-			$('#window-player').attr('width', $('.dialogcontainter').width() - 20); //完美兼容弹窗网页全屏
-			$('#window-player').css('width', $('.dialogcontainter').width() - 20+'px'); //完美兼容弹窗网页全屏
-			GM_setValue('player_width', ($('.dialogcontainter').width() - 20));
-			//$('#window-player').height($('.dialogcontainter').height() - 70);
-			$('#window-player').attr('height', $('.dialogcontainter').height() - 70); //完美兼容弹窗网页全屏
-			$('#window-player').css('height', $('.dialogcontainter').height() - 70+'px'); //完美兼容弹窗网页全屏
-			GM_setValue('player_height', ($('.dialogcontainter').height() - 70));
-			//保存位置
-			//var top_offset=parseInt($('.dialogcontainter').css('top'),10)>300?300:parseInt($('.dialogcontainter').css('top'),10);
-			//GM_setValue('div_top',top_offset);//设置垂直位置的时候，如果是长页而且是浮动播放器时候记录位置，会导致播放器不知所踪
-			GM_setValue('div_left', ($('.dialogcontainter').offset().left));
-			if (isIE) {
-				removeListener(this._dragobj, "losecapture", this._fS);
-				this._dragobj.releaseCapture();
-			} else {
-				removeListener(window, "blur", this._fS);
-			};
-		}
-	})
-
-		function creat(title, content) {
-			$('.dialogcontainter').remove();
-			new Dialog({
-				Info: title = title,
-				Left: GM_getValue('div_left'),
-				Top: 50, //GM_getValue('div_top')
-				Width: (GM_getValue('player_width') + 20),
-				Height: (GM_getValue('player_height') + 70),
-				Content: content,
-				Zindex: (2000)
-			});
-			i++;
-			left += 10;
-		}
-
-		//函数 元素精确定位
-
-		function addNodeInsertedListener(elCssPath, handler, executeOnce, noStyle) {
-			var animName = "anilanim",
-				prefixList = ["-o-", "-ms-", "-khtml-", "-moz-", "-webkit-", ""],
-				eventTypeList = ["animationstart", "webkitAnimationStart", "MSAnimationStart", "oAnimationStart"],
-				forEach = function(array, func) {
-					for (var i = 0, l = array.length; i < l; i++) {
-						func(array[i]);
-					}
-				};
-			if (!noStyle) {
-				var css = elCssPath + "{",
-					css2 = "";
-				forEach(prefixList, function(prefix) {
-					css += prefix + "animation-duration:.001s;" + prefix + "animation-name:" + animName + ";";
-					css2 += "@" + prefix + "keyframes " + animName + "{from{opacity:.9;}to{opacity:1;}}";
-				});
-				css += "}" + css2;
-				GM_addStyle(css);
-			}
-			if (handler) {
-				var bindedFunc = function(e) {
-					var els = document.querySelectorAll(elCssPath),
-						tar = e.target,
-						match = false;
-					if (els.length !== 0) {
-						forEach(els, function(el) {
-							if (tar === el) {
-								if (executeOnce) {
-									removeNodeInsertedListener(bindedFunc);
-								}
-								handler.call(tar, e);
-								return;
-							}
-						});
-					}
-				};
-				forEach(eventTypeList, function(eventType) {
-					document.addEventListener(eventType, bindedFunc, false);
-				});
-				return bindedFunc;
-			}
-		}
-		//函数 元素精确定位取消绑定
-
-		function removeNodeInsertedListener(bindedFunc) {
-			var eventTypeList = ["animationstart", "webkitAnimationStart", "MSAnimationStart", "oAnimationStart"],
-				forEach = function(array, func) {
-					for (var i = 0, l = array.length; i < l; i++) {
-						func(array[i]);
-					}
-				};
-			forEach(eventTypeList, function(eventType) {
-				document.removeEventListener(eventType, bindedFunc, false);
-			});
-		}
+	//高大上的拖动DIV和改变DIV大小功能，来自互联网脚本之家www.jb51.net，还有大花猫的元素监听
+	
+	var z=1,i=1,left=10;var isIE=(document.all)?true:false;var Extend=function(destination,source){for(var property in source){destination[property]=source[property];}}
+	var Bind=function(object,fun,args){return function(){return fun.apply(object,args||[]);}}
+	var BindAsEventListener=function(object,fun){var args=Array.prototype.slice.call(arguments).slice(2);return function(event){return fun.apply(object,[event||window.event].concat(args));}}
+	var CurrentStyle=function(element){return element.currentStyle||document.defaultView.getComputedStyle(element,null);}
+	function create(elm,parent,fn){var element=document.createElement(elm);fn&&fn(element);parent&&parent.appendChild(element);return element};function addListener(element,e,fn){element.addEventListener?element.addEventListener(e,fn,false):element.attachEvent("on"+e,fn)};function removeListener(element,e,fn){element.removeEventListener?element.removeEventListener(e,fn,false):element.detachEvent("on"+e,fn)};var Class=function(properties){var _class=function(){return(arguments[0]!==null&&this.initialize&&typeof(this.initialize)=='function')?this.initialize.apply(this,arguments):this;};_class.prototype=properties;return _class;};var Dialog=new Class({options:{Width:400,Height:400,Left:100,Top:10,Titleheight:26,Minwidth:200,Minheight:200,CancelIco:true,ResizeIco:true,Info:"标题",Content:"无内容",Zindex:2},initialize:function(options){this._dragobj=null;this._resize=null;this._cancel=null;this._body=null;this._x=0;this._y=0;this._fM=BindAsEventListener(this,this.Move);this._fS=Bind(this,this.Stop);this._isdrag=null;this._Css=null;this.Width=this.options.Width;this.Height=this.options.Height;this.Left=this.options.Left;this.Top=this.options.Top;this.CancelIco=this.options.CancelIco;this.Info=this.options.Info;this.Content=this.options.Content;this.Minwidth=this.options.Minwidth;this.Minheight=this.options.Minheight;this.Titleheight=this.options.Titleheight;this.Zindex=this.options.Zindex;Extend(this,options);Dialog.Zindex=this.Zindex
+	var obj=['dialogcontainter','dialogtitle','dialogtitleinfo','dialogtitleico','dialogbody','dialogbottom'];for(var i=0;i<obj.length;i++){obj[i]=create('div',null,function(elm){elm.className=obj[i];});}
+	obj[2].innerHTML=this.Info;obj[4].innerHTML=this.Content;obj[1].appendChild(obj[2]);obj[1].appendChild(obj[3]);obj[0].appendChild(obj[1]);obj[0].appendChild(obj[4]);obj[0].appendChild(obj[5]);document.body.appendChild(obj[0]);this._dragobj=obj[0];this._resize=obj[5];this._cancel=obj[3];this._body=obj[4];with(this._dragobj.style){height=this.Height+"px";top=this.Top+"px";width=this.Width+"px";left=this.Left+"px";zIndex=this.Zindex;}
+	this._body.style.height=this.Height-this.Titleheight-parseInt(CurrentStyle(this._body).paddingLeft)*2+'px';addListener(this._dragobj,'mousedown',BindAsEventListener(this,this.Start,true));addListener(this._cancel,'mouseover',Bind(this,this.Changebg,[this._cancel,'0px 0px','-21px 0px']));addListener(this._cancel,'mouseout',Bind(this,this.Changebg,[this._cancel,'0px 0px','-21px 0px']));addListener(this._cancel,'mousedown',BindAsEventListener(this,this.Disappear));addListener(this._body,'mousedown',BindAsEventListener(this,this.Cancelbubble));addListener(this._resize,'mousedown',BindAsEventListener(this,this.Start,false));},Disappear:function(e){this.Cancelbubble(e);document.body.removeChild(this._dragobj);$('.player-list').remove();},Cancelbubble:function(e){this._dragobj.style.zIndex=++Dialog.Zindex;document.all?(e.cancelBubble=true):(e.stopPropagation())},Changebg:function(o,x1,x2){o.style.backgroundPosition=(o.style.backgroundPosition==x1)?x2:x1;},Start:function(e,isdrag){if(!isdrag){this.Cancelbubble(e);}
+	this._Css=isdrag?{x:"left",y:"top"}:{x:"width",y:"height"}
+	this._dragobj.style.zIndex=++Dialog.Zindex;this._isdrag=isdrag;this._x=isdrag?(e.clientX-this._dragobj.offsetLeft||0):(this._dragobj.offsetLeft||0);this._y=isdrag?(e.clientY-this._dragobj.offsetTop||0):(this._dragobj.offsetTop||0);if(isIE){addListener(this._dragobj,"losecapture",this._fS);this._dragobj.setCapture();}else{e.preventDefault();addListener(window,"blur",this._fS);}
+	addListener(document,'mousemove',this._fM);addListener(document,'mouseup',this._fS);if(GM_getValue('init360')==1)$("#player_content").addClass("hide");},Move:function(e){window.getSelection?window.getSelection().removeAllRanges():document.selection.empty();var i_x=e.clientX-this._x,i_y=e.clientY-this._y;this._dragobj.style[this._Css.x]=(this._isdrag?Math.max(i_x,0):Math.max(i_x,this.Minwidth))+'px';this._dragobj.style[this._Css.y]=(this._isdrag?Math.max(i_y,0):Math.max(i_y,this.Minheight))+'px'
+	if(!this._isdrag)
+	this._body.style.height=Math.max(i_y-this.Titleheight,this.Minheight-this.Titleheight)-2*parseInt(CurrentStyle(this._body).paddingLeft)+'px';},Stop:function(){$("#player_content").removeClass("hide");removeListener(document,'mousemove',this._fM);removeListener(document,'mouseup',this._fS);$('#window-player').attr('width',$('.dialogcontainter').width()-20);$('#window-player').css('width',$('.dialogcontainter').width()-20+'px');GM_setValue('player_width',($('.dialogcontainter').width()-20));$('#window-player').attr('height',$('.dialogcontainter').height()-70);$('#window-player').css('height',$('.dialogcontainter').height()-70+'px');GM_setValue('player_height',($('.dialogcontainter').height()-70));GM_setValue('div_left',($('.dialogcontainter').offset().left));if(isIE){removeListener(this._dragobj,"losecapture",this._fS);this._dragobj.releaseCapture();}else{removeListener(window,"blur",this._fS);};}})
+	function creat(title,content){$('.dialogcontainter').remove();new Dialog({Info:title=title,Left:GM_getValue('div_left'),Top:50,Width:(GM_getValue('player_width')+20),Height:(GM_getValue('player_height')+70),Content:content,Zindex:(2000)});i++;left+=10;}
+	function addNodeInsertedListener(elCssPath,handler,executeOnce,noStyle){var animName="anilanim",prefixList=["-o-","-ms-","-khtml-","-moz-","-webkit-",""],eventTypeList=["animationstart","webkitAnimationStart","MSAnimationStart","oAnimationStart"],forEach=function(array,func){for(var i=0,l=array.length;i<l;i++){func(array[i]);}};if(!noStyle){var css=elCssPath+"{",css2="";forEach(prefixList,function(prefix){css+=prefix+"animation-duration:.001s;"+prefix+"animation-name:"+animName+";";css2+="@"+prefix+"keyframes "+animName+"{from{opacity:.9;}to{opacity:1;}}";});css+="}"+css2;GM_addStyle(css);}
+	if(handler){var bindedFunc=function(e){var els=document.querySelectorAll(elCssPath),tar=e.target,match=false;if(els.length!==0){forEach(els,function(el){if(tar===el){if(executeOnce){removeNodeInsertedListener(bindedFunc);}
+	handler.call(tar,e);return;}});}};forEach(eventTypeList,function(eventType){document.addEventListener(eventType,bindedFunc,false);});return bindedFunc;}}
+	function removeNodeInsertedListener(bindedFunc){var eventTypeList=["animationstart","webkitAnimationStart","MSAnimationStart","oAnimationStart"],forEach=function(array,func){for(var i=0,l=array.length;i<l;i++){func(array[i]);}};forEach(eventTypeList,function(eventType){document.removeEventListener(eventType,bindedFunc,false);});}
+	
 })();
