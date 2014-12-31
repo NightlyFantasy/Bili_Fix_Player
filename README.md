@@ -95,7 +95,7 @@
 ### 脚本功能：
 0:概述功能{
 
-![github](http://bilili.ml/wp-content/uploads/2014/07/bilifix1.png "github")
+![github](https://camo.githubusercontent.com/741ffb1399e7f615c8a16dbde8d09c2c56d49681/687474703a2f2f62696c696c692e6d6c2f77702d636f6e74656e742f75706c6f6164732f323031342f30372f62696c69666978312e706e67 "github")
 
 }
 
@@ -118,24 +118,24 @@
 
 爱奇艺番【可以使用一个海外的代理并将http://interface.bilibili.com/playurl?*作为代理规则加入到代理列表中即可弹窗播放爱奇艺视频】然后搜索所需的弹窗即可破解，
 
-![github](http://bilili.ml/wp-content/uploads/2014/07/bilifix3.png "github")
+![github](https://camo.githubusercontent.com/cb914da1148206e7aa19ad78f3b803c3cfeda483/687474703a2f2f62696c696c692e6d6c2f77702d636f6e74656e742f75706c6f6164732f323031342f30372f62696c69666978332e706e67 "github")
 
 3：评论区域分页悬浮
 
 当想要迅速分页查看评论时每次都需要滚动到页底部？本功能帮助你【需要到步骤1那里设置打开】，实现分页栏悬浮，快速翻页
 
-![github](http://bilili.ml/wp-content/uploads/2014/07/bilifix2.png "github")
+![github](https://camo.githubusercontent.com/c1ec27cd9df35e16e0dd2b2141b9f105d9399dad/687474703a2f2f62696c696c692e6d6c2f77702d636f6e74656e742f75706c6f6164732f323031342f30372f62696c69666978322e706e67 "github")
 
 4：评论区域去和谐
 2333每次都会看到这种情况？
 
-![github](http://bilili.ml/wp-content/uploads/2014/07/bilifix4.png "github")
+![github](https://camo.githubusercontent.com/c6f94c8355649491cafab46c260333db4d71c7ec/687474703a2f2f62696c696c692e6d6c2f77702d636f6e74656e742f75706c6f6164732f323031342f30372f62696c69666978342e706e67 "github")
 
 本功能帮助你【需要到步骤1那里设置打开】，实现评论去和谐，快速浏览信息
 
 OK，打开该功能后，
 
-![github](http://bilili.ml/wp-content/uploads/2014/07/bilifix5.png "github")
+![github](https://camo.githubusercontent.com/7f1e840db947f921be2683dc0dc16af063fc49d1/687474703a2f2f62696c696c692e6d6c2f77702d636f6e74656e742f75706c6f6164732f323031342f30372f62696c69666978352e706e67 "github")
 
 #### 脚本的安装方法，以下只简单介绍安装方法，如果有不明白的，可以去百度火狐吧贴吧提问，或者在本博下面回复，我们尽量帮您
 ### 概况安装方法：
