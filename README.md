@@ -19,10 +19,12 @@
 
 地址3[已经丢弃]：USO已经挂了，无法更新代码3.5.2，请使用下面的地址，顺便吐槽下USO，真是越来越垃圾
 
-#### 当前最新版本为2014-12-08更新的版本3.8.2
+#### 当前最新版本为2015-01-10更新的版本3.8.3
 你造吗？使用Github通道将最先获得最新版本
 
 #### 出现无法播放情况先关闭自动修复
+> 2015-01-10API账号被封，现更换appkey，感谢swordfeng和tiansh两位小伙伴，增加一个视频播放页面的治疗按钮，用于治疗乐视源和搜狐源无法播放的情况，自动滚动到播放器时机提前，即使api返回缓慢，还是可以体验到极速自动滚屏到播放器
+
 > 2014-12-08重新兼容火狐魔镜，重新修复部分乐视源只播广告，采用改版bili播放器，弹窗分P列表标题显示
 
 > 2014-11-25 博主太懒啊很多小功能修复不了(技术原因也有),本次只修复了视频下载有分段的情况和治疗下部分乐视源弹窗播放广告不播视频,博主无面向对象编程经验，此次更新尝试了部分类的写法，感觉萌(bu)萌(hui)哒(xie)。
@@ -95,7 +97,7 @@
 ### 脚本功能：
 0:概述功能{
 
-![github](http://bilili.ml/wp-content/uploads/2014/07/bilifix1.png "github")
+![github](https://camo.githubusercontent.com/741ffb1399e7f615c8a16dbde8d09c2c56d49681/687474703a2f2f62696c696c692e6d6c2f77702d636f6e74656e742f75706c6f6164732f323031342f30372f62696c69666978312e706e67 "github")
 
 }
 
@@ -118,24 +120,24 @@
 
 爱奇艺番【可以使用一个海外的代理并将http://interface.bilibili.com/playurl?*作为代理规则加入到代理列表中即可弹窗播放爱奇艺视频】然后搜索所需的弹窗即可破解，
 
-![github](http://bilili.ml/wp-content/uploads/2014/07/bilifix3.png "github")
+![github](https://camo.githubusercontent.com/cb914da1148206e7aa19ad78f3b803c3cfeda483/687474703a2f2f62696c696c692e6d6c2f77702d636f6e74656e742f75706c6f6164732f323031342f30372f62696c69666978332e706e67 "github")
 
 3：评论区域分页悬浮
 
 当想要迅速分页查看评论时每次都需要滚动到页底部？本功能帮助你【需要到步骤1那里设置打开】，实现分页栏悬浮，快速翻页
 
-![github](http://bilili.ml/wp-content/uploads/2014/07/bilifix2.png "github")
+![github](https://camo.githubusercontent.com/c1ec27cd9df35e16e0dd2b2141b9f105d9399dad/687474703a2f2f62696c696c692e6d6c2f77702d636f6e74656e742f75706c6f6164732f323031342f30372f62696c69666978322e706e67 "github")
 
 4：评论区域去和谐
 2333每次都会看到这种情况？
 
-![github](http://bilili.ml/wp-content/uploads/2014/07/bilifix4.png "github")
+![github](https://camo.githubusercontent.com/c6f94c8355649491cafab46c260333db4d71c7ec/687474703a2f2f62696c696c692e6d6c2f77702d636f6e74656e742f75706c6f6164732f323031342f30372f62696c69666978342e706e67 "github")
 
 本功能帮助你【需要到步骤1那里设置打开】，实现评论去和谐，快速浏览信息
 
 OK，打开该功能后，
 
-![github](http://bilili.ml/wp-content/uploads/2014/07/bilifix5.png "github")
+![github](https://camo.githubusercontent.com/7f1e840db947f921be2683dc0dc16af063fc49d1/687474703a2f2f62696c696c692e6d6c2f77702d636f6e74656e742f75706c6f6164732f323031342f30372f62696c69666978352e706e67 "github")
 
 #### 脚本的安装方法，以下只简单介绍安装方法，如果有不明白的，可以去百度火狐吧贴吧提问，或者在本博下面回复，我们尽量帮您
 ### 概况安装方法：

@@ -4,7 +4,7 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video\/|search)?.*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video\/|search)?.*$/
-// @version     3.8.2
+// @version     3.8.3
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @require http://static.hdslb.com/js/jquery.min.js
@@ -17,7 +17,8 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
-2014-12-08重新兼容火狐魔镜，重新修复部分乐视源只播广告，采用改版bili播放器，弹窗分P列表标题显示
+2015-01-10API账号被封，现更换appkey，感谢swordfeng和tiansh两位小伙伴，增加一个视频播放页面的治疗按钮，用于治疗乐视源和搜狐源无法播放的情况，自动滚动到播放器时机提前，即使api返回缓慢，还是可以体验到极速自动滚屏到播放器
+2014-12-08重新兼容火狐魔镜，重新修复部分乐视源只播广告，采用改版bili播放器，，弹窗分P列表标题显示
 2014-11-25 博主太懒啊很多小功能修复不了(技术原因也有),本次只修复了视频下载有分段的情况和治疗下部分乐视源弹窗播放广告不播视频,博主无面向对象编程经验，此次更新尝试了部分类的写法，感觉萌(bu)萌(hui)哒(xie)。
 2014-10-31  自动宽屏功能会自动强制替换视频，而且无论何种B站播放器都有效；重写了视频下载功能，因为原来的模糊视频接口坏了，此次修改成更加直观的下载
 2014-09-27移除记录弹窗播放器垂直位置功能(因为部分chrome用户老是反应播放器不知所踪),重构弹窗函数，修复弹窗函数多次运行导致分P列表重叠无法选择，博主采用了新的元素点击事件函数，从而使每个弹窗元素只有唯一一个点击事件，并修复了在火狐下视频播放页替换播放器后的网页全屏（chrome下无解，等待大神帮助），重新处理监听ajax产生的新数据，使用了贴吧大花猫的监听函数，因此可以无须点击左下角的【重新渲染按钮】，但是在部分机器可能有卡顿，如果觉得卡顿可以自行删除307行的代码即可，增加按需替换播放器选项【以前是一律强制替换】，自动宽屏在弹窗和视频页大型播放器下并且强制替换选项开启有效，按需替换则部分有效[因为是替换后的视频才有效]
@@ -79,14 +80,14 @@
 		GM_setValue('init', 1);
 	}
 	//欢迎屏幕
-	var version = '3.8.2';
+	var version = '3.8.3';
 	var local_version = GM_getValue('version');
 	if (version != local_version) {
 	alert('\n\
-	1:感谢使用Bili Fix Player版本号3.8.2[20141208]，阅读以下说明将有助于你更好地使用脚本\n\
-	2:修复了治疗下部分乐视源弹窗播放广告不播视频[如古剑奇谭]，此时点击下治疗按钮即可(改版播放器来自网络)，注(修复上一版本播放器无效，博主大意了)\n\
-	3:给弹窗列表增加标题，方便选择[示例，http://www.bilibili.com/sp/YOU下里面的[修正43P]YOU 合集弹窗]\n\
-	4:增加火狐魔镜弹窗兼容，方便缩小窗口看电视剧（泥垢！其实是博主自己看电视剧\(^o^)/~，以前从来不看的，周末不上班啊实在无聊啊没有妹纸啊就看电视剧啊）\n\
+	1:感谢使用Bili Fix Player版本号3.8.3[20150110]，阅读以下说明将有助于你更好地使用脚本\n\
+	2:API账号被封，现更换appkey，感谢swordfeng和tiansh两位小伙伴，新的appkey不知道会不会也被和谐\n\
+	3:增加一个视频播放页面的治疗按钮，用于治疗乐视源和搜狐源无法播放的情况，可以尝试替换，不能保证百分百成功，试多几次看看\n\
+	4:自动滚动到播放器时机提前，即使api返回缓慢，还是可以体验到极速自动滚屏到播放器\n\
 	5:如果你发现BUG，可以随时提交给我。谢谢。http://bilili.ml/361.html\n\
 	6:感谢您的支持，我们下一版本再见！');
 	GM_setValue('version', version);
@@ -168,7 +169,7 @@
 		} else {
 			var cid = $('#av_source').attr('cid');
 			if (type == 'HD') {
-				var url = 'http://interface.bilibili.com/playurl?appkey=0a99fa1d87fdd38c&platform=android&quality=2&cid=' + cid + '&otype=json&platform=android';
+				var url = 'http://interface.bilibili.com/playurl?appkey=8e9fc618fbd41e28&platform=android&quality=2&cid=' + cid + '&otype=json&platform=android';
 				GM_xmlhttpRequest({
 					method: 'GET',
 					url: url,
@@ -178,15 +179,19 @@
 							var content = responseDetails.responseText;
 							var c = eval('(' + content + ')');
 							var durl = c.durl;
+							if(typeof(durl)=='undefined'){
+								alert('bili脚本提示：API返回错误：api调用失败，无法下载');
+							}else{
 							for (var i in durl) {
 								var url = durl[i]['url'];
 								insert_download_button('HD', url, parseInt(i) + 1);
 							}
 						}
+						}
 					}
 				});
 			} else {
-				var url = 'http://interface.bilibili.com/playurl?platform=android&cid=' + cid + '&quality=1&otype=json&appkey=0a99fa1d87fdd38c&type=mp4';
+				var url = 'http://interface.bilibili.com/playurl?platform=android&cid=' + cid + '&quality=1&otype=json&appkey=8e9fc618fbd41e28&type=mp4';
 				GM_xmlhttpRequest({
 					method: 'GET',
 					url: url,
@@ -196,10 +201,14 @@
 							var content = responseDetails.responseText;
 							var c = eval('(' + content + ')');
 							var durl = c.durl;
+							if(typeof(durl)=='undefined'){
+								alert('bili脚本提示：API返回错误：api调用失败，无法下载');
+							}else{
 							for (var i in durl) {
 								var url = durl[i]['url'];
 								insert_download_button('LD', url, parseInt(i) + 1);
 							}
+						}
 						}
 					}
 				});
@@ -244,7 +253,11 @@
 	//api获取cid
 
 	function api_get_cid(aid, page) {
-		var url = 'http://api.bilibili.com/view?type=json&appkey=0a99fa1d87fdd38c&batch=1&id=' + aid;
+		//自动滚动功能前置，以便api缓慢的时候也能及时响应
+		if (GM_getValue('auto_locate') == 1) $('html,body').animate({
+			scrollTop: $("#bofqi_embed,#bofqi").offset().top - 30
+		}, 500);
+		var url = 'http://api.bilibili.com/view?type=json&appkey=8e9fc618fbd41e28&batch=1&id=' + aid;
 		GM_xmlhttpRequest({
 			method: 'GET',
 			url: url,
@@ -254,8 +267,8 @@
 					var Content = eval('(' + responseDetails.responseText + ')');
 					var list = Content.list;
 					var p = page - 1;
-					if (list != undefined) {
-						var lp = (list[p] == undefined) ? list[0] : list[p]; //针对某些aid只有一个cid但是有分P的情况
+					if (typeof(list) != 'undefined') {
+						var lp = (typeof(list[p]) == 'undefined') ? list[0] : list[p]; //针对某些aid只有一个cid但是有分P的情况
 						var cid = lp.cid;
 						var type = lp.type;
 						insert_html(type); //UI
@@ -282,15 +295,13 @@
 							console.log('正在强制替换播放器');
 							Replace_player(aid, cid); //强制替换播放器 
 						}
-						if (GM_getValue('auto_locate') == 1) $('html,body').animate({
-							scrollTop: $("#bofqi_embed,#bofqi").offset().top - 30
-						}, 500);
 						$('#av_source').attr('cid', cid); //给av_source设置cid
-					} else {
-						window_player_init(); //执行弹窗函数
-						addNodeInsertedListener('.vidbox.v-list li a,.bgm-calendar.bgmbox li a,.rlist li a,.rm-list li a,.r-list li a,.top-list li a,.vidbox.zt  .t', function() {
-							window_player_init(); //ajax重新渲染,有可能导致浏览器卡顿，若卡顿请删除此行(仅此一行)
+						$("#app_qrcode_box").before('<div class="block">当前视频不能播放时[乐视或者搜狐]，<b style="color:red"><a href="javascript:void(0)" id="div_fix_letv_button">点我尝试治疗</a></b></div>');
+						$('#div_fix_letv_button').click(function() {
+						$('#bofqi').html(window_player.fix_letv(aid, cid));
 						});
+					} else {
+						alert('bili脚本提示：API返回错误');
 					}
 				}
 			}
@@ -301,8 +312,8 @@
 
 	function aid_build_player(aid) {
 		//aid=971415;这个aid奇葩出错
-		var url = 'http://api.bilibili.com/view?type=json&appkey=0a99fa1d87fdd38c&batch=1&id=' + aid;
-		GM_xmlhttpRequest({
+		var url = 'http://api.bilibili.com/view?type=json&appkey=8e9fc618fbd41e28&batch=1&id=' + aid;
+			GM_xmlhttpRequest({
 			method: 'GET',
 			url: url,
 			synchronous: false,
@@ -310,10 +321,10 @@
 				if (responseDetails.status == 200) {
 					var Content = eval('(' + responseDetails.responseText + ')');
 					var list = Content.list;
-					if (list != undefined) {
+					if (typeof(list) != 'undefined') {
 						//默认播放第一个分P-------------------
 						var p = 0;
-						var lp = (list[p] == undefined) ? list[0] : list[p];
+						var lp = (typeof(list[p]) == 'undefined') ? list[0] : list[p];
 						var cid = lp.cid;
 						if(GM_getValue('fix_firefox') != '1') {
 							$('#player_content').html(window_player.
@@ -368,7 +379,7 @@
 		//新番列表弹窗UI
 		$('.vd_list .title').each(
 			function() {
-				if ($(this).attr('has_window_btn') == undefined) {
+				if (typeof($(this).attr('has_window_btn')) == 'undefined') {
 					$(this).attr('has_window_btn', 'true');
 					var href = $(this).attr('href');
 					var pattern = /\/video\/av(\d+)\//ig;
@@ -387,7 +398,7 @@
 		//搜索列表专题List
 		$('.s_bgmlist li a').each(
 			function() {
-				if ($(this).attr('has_window_btn') == undefined) {
+				if (typeof($(this).attr('has_window_btn')) == 'undefined') {
 					$(this).attr('has_window_btn', 'true');
 					var href = $(this).attr('href');
 					var pattern = /\/video\/av(\d+)/ig;
@@ -407,7 +418,7 @@
 		//搜索列表弹窗UI
 		$('.result li .r a').each(
 			function() {
-				if ($(this).attr('has_window_btn') == undefined) {
+				if (typeof($(this).attr('has_window_btn')) == 'undefined') {
 					$(this).attr('has_window_btn', 'true');
 					var href = $(this).attr('href');
 					var pattern = /\/video\/av(\d+)\//ig;
@@ -425,7 +436,7 @@
 		//带缩略图弹窗UI、和侧栏新投稿弹窗UI、首页的推荐栏弹窗、侧栏列表弹窗UI
 		$('.vidbox.v-list li a,.bgm-calendar.bgmbox li a,.rlist li a,.rm-list li a,.r-list li a,.top-list li a').each(
 			function() {
-				if ($(this).attr('has_window_btn') == undefined) {
+				if (typeof($(this).attr('has_window_btn')) == 'undefined') {
 					$(this).attr('has_window_btn', 'true');
 					var href = $(this).attr('href');
 					var pattern = /\/video\/av(\d+)\//ig;
@@ -443,9 +454,9 @@
 		//专题
 		$('.vidbox.zt  .t').each(
 			function() {
-				if ($(this).attr('has_window_btn') == undefined) {
+				if (typeof($(this).attr('has_window_btn')) == 'undefined') {
 					$(this).attr('has_window_btn', 'true');
-					var href = $(this).attr('href') == undefined ? $(this).parent('a').attr('href') : $(this).attr('href');
+					var href = typeof($(this).attr('href')) == 'undefined' ? $(this).parent('a').attr('href') : $(this).attr('href');
 					var pattern = /\/video\/av(\d+)\//ig;
 					var content = pattern.exec(href);
 					var aid = content ? (content[1]) : '';
@@ -462,7 +473,7 @@
 		//旧版首页分区列表
 		$('.video  li a,.video-wrapper li a').each(
 			function() {
-				if ($(this).attr('has_window_btn') == undefined) {
+				if (typeof($(this).attr('has_window_btn')) == 'undefined') {
 					$(this).attr('has_window_btn', 'true');
 					var href = $(this).attr('href');
 					var pattern = /\/video\/av(\d+)\//ig;
@@ -490,7 +501,7 @@
 			creat(title_html, a); //创建可视化窗口
 			$('.dialogcontainter').after(list_html);
 			$('#window_play_info').html('正在播放第<span style="color:#DB5140">1P</span>');
-			$('#window_play_title').html('<p><a id="div_positon_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #E54C7E;">固定播放器</a><a id="list_control_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #0CB3EE;">收缩分P列表[在左边]</a><a id="div_fix_letv_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #ED6A4C;">点我专治乐视源不服(乐视源只播广告的情况请点击)</a>[拖动标题可移动播放器，拖动右下角可改变播放器大小，设置后自动保存宽高和位置]。注意：如果需要使用火狐魔镜，需要在设置里面开启兼容火狐魔镜，并在点击魔镜分离播放器前拖拽改变播放器大小，并点击固定播放器，弹窗即可正常</p>');
+			$('#window_play_title').html('<p><a id="div_positon_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #E54C7E;">固定播放器</a><a id="list_control_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #0CB3EE;">收缩分P列表[在左边]</a><a id="div_fix_letv_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #ED6A4C;">点我专治乐视、搜狐源不服(乐视源或者搜狐源无法播放的情况请点击)</a>[拖动标题可移动播放器，拖动右下角可改变播放器大小，设置后自动保存宽高和位置]。注意：如果需要使用火狐魔镜，需要在设置里面开启兼容火狐魔镜，并在点击魔镜分离播放器前拖拽改变播放器大小，并点击固定播放器，弹窗即可正常</p>');
 			//切换分P按钮
 			$('#list_control_button').click(function() {
 				var flag = $(".player-list").css("display");
@@ -560,7 +571,16 @@
 	var page = aid_array === null ? '1' : typeof(aid_array[2]) == 'undefined' ? '1' : aid_array[2]; //分p
 
 	//播放器的html
+	if(aid==''){
+	window_player_init(); //执行弹窗函数
+	addNodeInsertedListener('.vidbox.v-list li a,.bgm-calendar.bgmbox li a,.rlist li a,.rm-list li a,.r-list li a,.top-list li a,.vidbox.zt  .t', function() {
+	window_player_init(); //ajax重新渲染,有可能导致浏览器卡顿，若卡顿请删除此行(仅此一行)
+	});
+	}else{
 	api_get_cid(aid, page); //按照aid和分p获取cid并且替换播放器
+	}
+
+	
 
 	//当设置悬浮评论分页栏时，增加css
 	if (GM_getValue('pagebox_display') == 1) {
@@ -608,7 +628,7 @@
 		},
 		default: function(aid, cid) {
 			window_player.init(aid, cid);
-			return '<iframe  id="window-player" class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + this.wide + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="' + this.height + '" width="' + this.width + '"></iframe>';
+			return '<iframe id="window-player" class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + this.wide + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="' + this.height + '" width="' + this.width + '"></iframe>';
 		},
 		fix_firefox: function(aid, cid) {
 			window_player.init(aid, cid);
