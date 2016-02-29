@@ -5,7 +5,8 @@
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video|search|sp).*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video|search|sp).*$/
 // @include     http://www.bilibili.com/
-// @version     3.9(charlotte)
+// @include     http://www.bilibili.com/bangumi/*
+// @version     3.9.4
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @require http://static.hdslb.com/js/jquery.min.js
@@ -18,11 +19,13 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
-3.9(charlotte)版本：优化菜单功能，以前的菜单有点琢磨不透！
+3.9.4试运行版：增加了一个B站官方的弹幕播放器，神曲you！
+增加bangumi番剧页面弹窗
+B站官方的弹幕播放器摘自http://tieba.baidu.com/p/4355490187谷歌卫士
 */
 (function() {
 	//初始化 init
-	if (GM_getValue('init') == undefined || GM_getValue('version') != '3.9(charlotte)') { //初始化优化，只查询一次数据库
+	if (GM_getValue('init') == undefined || GM_getValue('version') != '3.9.4') { //初始化优化，只查询一次数据库
 		if (GM_getValue('version') == undefined)
 			GM_setValue('version', 1); //版本号
 		if (GM_getValue('auto') == undefined)
@@ -56,18 +59,18 @@
 		GM_setValue('init', 1);
 	}
 	//欢迎屏幕
-	var version = '3.9(charlotte)';
+	var version = '3.9.4';
 	var local_version = GM_getValue('version');
 	if (version != local_version) {
 		alert('\n\
-				1:感谢使用Bili Fix Player版本号3.9(charlotte)版：优化菜单功能，以前的菜单有点琢磨不透！\n');
+				1:感谢使用Bili Fix Player版本号3.9.4试运行版：增加了一个B站官方的弹幕播放器，神曲you！\n');
 		GM_setValue('version', version);
 	}
 	fix_player_fullwin = {
 		fix_init: function() {
 			setTimeout(function() {
 				// 代码来自 http://static.hdslb.com/js/page.arc.js 为了兼容性目的添加了 .tv 相关域名
-				location.href = ['javascript: void(function () {var c;',
+				unsafeWindow.location.href = ['javascript: void(function () {var c;',
 					'window.postMessage?(c=function(a){"https://secure.bilibili.com"!=a.origin',
 					'&&"https://secure.bilibili.tv"!=a.origin&&"https://ssl.bilibili.com"!=a.origin',
 					'&&"https://ssl.bilibili.tv"!=a.origin||"secJS:"!=a.data.substr(0,6)',
@@ -84,7 +87,7 @@
 		fix_window: function() {
 			fix_player_fullwin.fix_init();
 			setTimeout(function() {
-				location.href = 'javascript:void(' + function() {
+				unsafeWindow.location.href = 'javascript:void(' + function() {
 					player_fullwin = function(is_full) {
 						$('.z, .header, .z_top, .footer').css({
 							'display': is_full ? 'none' : 'block'
@@ -105,6 +108,7 @@
 			}, 0);
 		}
 	};
+	
 	/**
 	-------------------------------用户界面GUI View-------------------------------------
 	 */
@@ -120,10 +124,13 @@
 				var fix_type = '小型默认B站播放器[兼容火狐魔镜]';
 				break;
 			case 4:
+				var fix_type = '原版B站HTML5弹幕播放器[谷歌卫士提供]';
+				break;
+			case 5:
 				var fix_type = 'HTML5无弹幕播放器';
 				break;
 			default:
-				var fix_type = '按需替换[替换成默认大型B站播放器]';
+				var fix_type = '按需替换[替换非B站播放器,此时自动宽屏功能无效]';
 		}
 		var display = GM_getValue('pagebox_display') ? '悬浮' : '默认';
 		var harm = GM_getValue('pagebox_harm') ? '和谐娘打酱油中' : '默认[和谐娘和谐中]';
@@ -131,7 +138,7 @@
 		var auto_locate = GM_getValue('auto_locate') ? '已打开' : '已关闭';
 		var auto_wide = GM_getValue('auto_wide') ? '已打开' : '已关闭';
 		var window_play = GM_getValue('window_play') ? '已打开' : '已关闭';
-		var div = '<div ><a style="color:red" id="bili-fix-player-installed" class="i-link">脚本</a>\
+		var div = '<li class="m-i home" id="bili-fix-player-installed"><a class="i-link"><em style="color:red;font-weight:bold">脚本</em></a><div >\
 									<ul class="i_num i_num_a blborder" id="bili_fix_script">\
 									<li><a>360浏览器兼容[非360勿开]:<bl id="init360" class="bfpbtn">' + init360 + '</bl></a><em></em></li>\
 									<li><a>自动修复(修改后请刷新页面):<bl id="bili_fix" class="bfpbtn">' + auto + '</bl></a><em></em></li>\
@@ -153,8 +160,8 @@
 									<li><a id="down_cid_xml" target="_blank">弹幕下载</a><em></em></li>';
 		}
 		div += '</ul>\
-				<span class="addnew_5">+10086</span></div>';
-		$('li.m-i:nth-child(1) > a:nth-child(1)').prop('outerHTML', div);
+				</div>';
+		$('.m-i.home').prop('outerHTML', div);
 		//下载高清
 		$('#hd_av_download').click(function() {
 			download_bili_av('HD');
@@ -172,13 +179,11 @@
 			},
 			Control: function(config_val, selector, notice1, notice2) {
 				if (config_val == 'fix_type') {
-					if (GM_getValue('fix_type') >= 4 || typeof(GM_getValue('fix_type')) == 'undefined') { //超过4自动复位成按需替换
+					if (GM_getValue('fix_type') >= 5 || typeof(GM_getValue('fix_type')) == 'undefined') { //超过4自动复位成按需替换
 						GM_setValue('fix_type', 1);
 					} else {
 						GM_setValue('fix_type', GM_getValue('fix_type') + 1);
-						console.log('aaaaa=' + GM_getValue('fix_type'));
 					}
-					console.log(GM_getValue('fix_type'));
 					var s = '当前设置为-';
 					switch (GM_getValue('fix_type')) {
 						case 2:
@@ -188,10 +193,13 @@
 							s += '小型默认B站播放器[兼容火狐魔镜]';
 							break;
 						case 4:
+							s += '原版B站HTML5弹幕播放器[谷歌卫士提供]';
+							break;
+						case 5:
 							s += 'HTML5无弹幕播放器';
 							break;
 						default:
-							s += '按需替换[替换成默认大型B站播放器]';
+							s += '按需替换[替换非B站播放器,此时自动宽屏功能无效]';
 					}
 
 				} else {
@@ -323,85 +331,130 @@
 	 */
 	//函数，替换播放器
 
-	function Replace_player(aid, cid, div) {
+	function Replace_player(aid, cid, div,page,type) {
 		var wide = '';
 		var w = 0;
 		if (GM_getValue('auto_wide') == 1) {
 			var wide = '&as_wide=1'; //自动宽屏
 			var w = 1;
 		}
+		if(type){
+		var width=1160;var height=650;//类型1在视频页面。宽度高度固定不变
+		}else{
+		var width=GM_getValue('player_width');var height=GM_getValue('player_height');//弹窗模式，类型0，宽度高度是自己设置的
+		}
 		switch (GM_getValue('fix_type')) {
 			case 2:
-				$(div).html('<iframe class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + wide + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="482" width="950"></iframe>');
+				$(div).html('<iframe class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + wide + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="'+height+'" width="'+width+'" style="width:'+width+'px;height:'+height+'px"></iframe>');
 				fix_player_fullwin.fix_page();
-				console.log('正在强制替换->[大型默认B站播放器]');
 				ac_alert('normal', '正在强制替换->[大型默认B站播放器]', 3000);
 				break;
 			case 3:
 				$(div).html('<embed id="bofqi_embed" class="player" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + cid + '&aid=' + aid + wide + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high" wmode="window" style="width:100%;height:100%">');
 				$(div).css({
-					width: "960px",
-					height: "520px"
+					width: width+"px",
+					height: height+"px"
 				});
-				console.log('正在强制替换->小型默认B站播放器[兼容火狐魔镜]');
 				ac_alert('normal', '正在强制替换->小型默认B站播放器[兼容火狐魔镜]', 3000);
 				break;
 			case 4:
-				html5_cm_play(cid, div, 0, w);
-				console.log('正在强制替换->HTML5无弹幕播放器');
+				html5_cm_play(aid,cid, div, 1, page,width,height,type);
+				window.location.hash = "page=" + page;
+				//$(div).css('height', "600px");
+				ac_alert('normal', '正在强制替换->原版B站HTML5弹幕播放器[谷歌卫士提供]', 3000);
+				break;
+			case 5:
+				html5_cm_play(aid,cid, div, 0, page,width,height,type);
 				ac_alert('normal', '正在强制替换->HTML5无弹幕播放器', 3000);
 				break;
 			default:
 				if (div == '#bofqi') { // $(div).html().match
 					var need_replace_player = (/static\.hdslb\.com\/play\.swf|secure\.bilibili\.com\/secure,cid=/).test($(div).html());
 				}
-				if (!need_replace_player || div == '#player_content') {
-					$(div).html('<iframe class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + wide + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="482" width="950"></iframe>');
+				if (!need_replace_player || div == '#player_content #bofqi') {
+					$(div).html('<iframe class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + wide + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" height="'+height+'" width="'+width+'" style="width:'+width+'px;height:'+height+'px"></iframe>');
 					fix_player_fullwin.fix_page();
-					console.log('正在按需替换->[替换成默认大型B站播放器]');
-					ac_alert('normal', '正在按需替换->[替换成默认大型B站播放器]', 3000);
+					ac_alert('normal', '正在按需替换->[替换非B站播放器,此时自动宽屏功能无效]', 3000);
 				}
 		}
 	}
+	
+	//特殊！当用户不能登录的情况下获取cid，途径，从http://www.bilibilijj.com/
+	function special_get_cids(aid,page){
+		GM_xmlhttpRequest({
+		method: 'GET',
+		url: 'http://www.bilibilijj.com/video/av'+aid,
+		synchronous: false,
+		onload: function(responseDetails) {
+			if (responseDetails.status == 200) {
+				var Content = responseDetails.responseText;
+				var patt =/<span class='Width-2 Box PBox' data-cid='(\d+)' data-p='\d+'>/g;
+				var result;var arr=new Array();
+				while ((result = patt.exec(Content)) != null)  {
+				 arr.push(result[1]);
+				 }
+				 if(arr.length==0){
+				 ac_alert('error', 'bili脚本提示：特殊API返回错误，无法继续执行脚本', 5000);
+				 }else{
+				 ac_alert('success', '请求特殊api成功重构播放器', 3000);
+				 var div='';
+				 for(var i in arr){
+				 div+='<a href="/video/av'+aid+'/index_'+(parseInt(i)+1)+'.html">'+(parseInt(i)+1)+'P</a>';
+				 }
+				 $('div.z').html('<div class="main-inner"><div id="heimu"></div><div class="viewbox"> <div class="alist"><div class="alist-content clearfix" id="alist">'+div+'</div></div>    </div>    </div><div class="player-wrapper"><div class="scontent" id="bofqi"></div></div>');	
+				 var cid=arr[(parseInt(page)-1)];
+				 Replace_player(aid, cid, '#bofqi',page,1); //自动修复--在视频页面，宽度高度是固定值
+				 }
+			}
+		}
+	});
+	}
+	
 	//api获取cid
 
 	function api_get_cid(aid, cid, page) {
-		//自动滚动功能前置，以便api缓慢的时候也能及时响应
-		if (GM_getValue('auto_locate') == 1)
-			$('html,body').animate({
-				scrollTop: $("#bofqi_embed,#bofqi").offset().top - 30
-			}, 500);
-		if (cid) { //cid已知的情况下不请求api
-			init_video_page('未获取[由于已知cid不请求api]', aid, cid);
-			ac_alert('success', '此页面cid已知的情况下不请求api', 3000);
-		} else { //cid无法获取的时候请求api
-			var url = 'http://api.bilibili.com/view?type=json&appkey=8e9fc618fbd41e28&batch=1&id=' + aid;
-			GM_xmlhttpRequest({
-				method: 'GET',
-				url: url,
-				synchronous: false,
-				onload: function(responseDetails) {
-					if (responseDetails.status == 200) {
-						var Content = eval('(' + responseDetails.responseText + ')');
-						var list = Content.list;
-						var p = page - 1;
-						if (typeof(list) != 'undefined') {
-							var lp = (typeof(list[p]) == 'undefined') ? list[0] : list[p]; //针对某些aid只有一个cid但是有分P的情况
-							var cid = lp.cid;
-							var type = lp.type;
-							init_video_page(type, aid, cid);
-							ac_alert('success', '请求api得到了相关信息', 3000);
-						} else {
-							//alert('bili脚本提示：API返回错误');
-							ac_alert('error', 'bili脚本提示：API返回错误', 3000);
+		if ($("#bofqi_embed,#bofqi").size() == 0) {
+			special_get_cids(aid, page);
+			init_video_page('未获取[本页面使用了特殊替换功能]', aid, cid, page);
+			ac_alert('success', '本页面使用了特殊替换功能[比如原本需要登录才能查看的视频]', 3000);
+		} else {
+			if (cid) { //cid已知的情况下不请求api
+				init_video_page('未获取[由于已知cid不请求api]', aid, cid, page);
+				ac_alert('success', '此页面cid已知的情况下不请求api', 3000);
+			} else { //cid无法获取的时候请求api
+				var url = 'http://api.bilibili.com/view?type=json&appkey=8e9fc618fbd41e28&batch=1&id=' + aid;
+				GM_xmlhttpRequest({
+					method: 'GET',
+					url: url,
+					synchronous: false,
+					onload: function(responseDetails) {
+						if (responseDetails.status == 200) {
+							var Content = eval('(' + responseDetails.responseText + ')');
+							var list = Content.list;
+							var p = page - 1;
+							if (typeof(list) != 'undefined') {
+								var lp = (typeof(list[p]) == 'undefined') ? list[0] : list[p]; //针对某些aid只有一个cid但是有分P的情况
+								var cid = lp.cid;
+								var type = lp.type;
+								init_video_page(type, aid, cid, page);
+								ac_alert('success', '请求api得到了相关信息', 3000);
+							} else {
+								//alert('bili脚本提示：API返回错误');
+								ac_alert('error', 'bili脚本提示：API返回错误', 3000);
+							}
 						}
 					}
-				}
-			});
+				});
+			}
+			if (GM_getValue('auto_locate') == 1) { //自动滚动功能前置，以便api缓慢的时候也能及时响应
+				$('html,body').animate({
+					scrollTop: $("#bofqi_embed,#bofqi").offset().top - 30
+				}, 500);
+			}
 		}
 	}
 
-	function init_video_page(type, aid, cid) {
+	function init_video_page(type, aid, cid,page) {
 		insert_html(type, 'video_page'); //UI
 		//修复360浏览器flash霸占脚本设置区域
 		if (GM_getValue('init360') == 1) {
@@ -415,7 +468,7 @@
 		var cid_xml_url = 'http://comment.bilibili.com/' + cid + '.xml';
 		$('#down_cid_xml').attr('href', cid_xml_url); //弹幕下载
 		if (GM_getValue('auto') == '1') { //如果打开了自动修复
-			Replace_player(aid, cid, '#bofqi'); //自动修复
+			Replace_player(aid, cid, '#bofqi',page,1); //自动修复--在视频页面，宽度高度是固定值
 		}
 		$('#av_source').attr('cid', cid); //给av_source设置cid
 		$("#app_qrcode_box").before('<div class="block">视频不能播时<b style="color:red"><a href="javascript:void(0)" id="div_fix_letv_button">点我尝试治疗</a></b></div>');
@@ -443,7 +496,7 @@
 						var p = 0;
 						var lp = (typeof(list[p]) == 'undefined') ? list[0] : list[p];
 						var cid = lp.cid;
-						Replace_player(aid, cid, '#player_content');
+						Replace_player(aid, cid, '#player_content #bofqi',1,0);
 						$('#div_fix_letv_button').attr('aid', aid);
 						$('#div_fix_letv_button').attr('cid', cid);
 						//分P列表和播放器------------------------------
@@ -452,7 +505,12 @@
 								var cid = list[z].cid;
 								var p = parseInt(z) + 1;
 								var title = list[z].part;
-								$('#window_play_list').append('<li class="single_play_list" data-field="aid=' + aid + '&cid=' + cid + '"><a  href="javascript:void(0);" style="color:#00A6D8;" >[' + p + 'p]' + title + '</a></li>');
+								if(p==1){
+								var lclass="on";
+								}else{
+								var lclass="";
+								}
+								$('#window_play_list').append('<li class="single_play_list '+lclass+'" data-field="aid=' + aid + '&cid=' + cid + '&page='+p+'"><a  href="javascript:void(0);" style="color:#00A6D8;" >[' + p + 'p]' + title + '</a></li>');
 							}
 						}
 						if (!unsafeWindow.player_fullwin)
@@ -462,13 +520,15 @@
 							function() {
 								$('#window_play_info').html('正在播放第<span style="color:#DB5140">' + $(this).find('a').html() + '</span>');
 								var info = $(this).attr('data-field');
-								var pattern = /aid=(\d+)&cid=(\d+)/ig;
+								var pattern = /aid=(\d+)&cid=(\d+)&page=(\d+)/ig;
 								var val = pattern.exec(info);
 								var aid = val === null ? '' : val[1];
 								var cid = val === null ? '' : val[2];
+								var page=val === null ? '' : val[3];
+								window.location.hash = "page=" + page;
 								$('#div_fix_letv_button').attr('aid', aid);
 								$('#div_fix_letv_button').attr('cid', cid);
-								Replace_player(aid, cid, '#player_content');
+								Replace_player(aid, cid, '#player_content #bofqi',page,0);
 							});
 					} else {
 						ac_alert('info', '弹窗解析错误，请关闭弹窗重试，如果再次出现，请直接打开播放页播放', 3000);
@@ -483,6 +543,24 @@
 
 	function window_player_init() {
 		//弹窗------------------------------
+		//2015-09-24番剧bangumi页面的弹窗
+		$('#episode_list li .t').each(
+			function() {
+				if (typeof($(this).attr('has_window_btn')) == 'undefined') {
+					$(this).attr('has_window_btn', 'true');
+					var href = $(this).parent('a').attr('href');
+					var pattern = /\/video\/av(\d+)\//ig;
+					var content = pattern.exec(href);
+					var aid = content ? (content[1]) : '';
+					if (aid != '') {
+						var title = $(this).html();
+						$(this).prepend('<a class="single_player singleplaybtn fjlist" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
+						$(this).find('a').click(function() {
+							single_player(aid, title)
+						});
+					}
+				}
+			});
 		//新番列表弹窗UI
 		$('.vd_list .title').each(
 			function() {
@@ -602,8 +680,9 @@
 
 	function single_player(aid, title) {
 		$('.player-list').remove(); //移除播放列表
-		var a = '<p id="window_play_title">脚本(｀・ω・´)正在加载中</p><div id="player_content">脚本(｀・ω・´)播放器正在努力加载中....</div>';
-		var list_html = '<div class="player-list"><div class="sort"><i>分P列表</i></div><ul id="window_play_list"></ul></div>';
+		window.location.hash = "page=1" ;
+		var a = '<p id="window_play_title">脚本(｀・ω・´)正在加载中</p><div id="player_content"><div id="bofqi">脚本(｀・ω・´)播放器正在努力加载中....</div></div>';
+		var list_html = '<div id="part_list" class="player-list"><div class="sort"><i>分P列表</i></div><ul id="window_play_list" class="lst unselectable"></ul></div>';
 		var title_html = '<a class="mark_my_video singleplaybtn" href="javascript:void(0);" style="color:white;background:none repeat scroll 0% 0% rgb(0, 182, 228) !important;" data-field="' + aid + '" title="收藏该视频">★Mrak</a>&nbsp;&nbsp;&nbsp;<a class="singleplaybtn" href="http://www.bilibili.com/video/av' + aid + '/" style="color:white;background:none repeat scroll 0% 0% #1E344A!important;" target="_blank" title="前往播放页面">Go</a>&nbsp;&nbsp;&nbsp;<span style="color:#8C8983">' + title.replace('弹▶', '') + '</span>&nbsp;&nbsp;&nbsp;▶<span id="window_play_info"></span>';
 		setTimeout(function() {
 			creat(title_html, a); //创建可视化窗口
@@ -642,7 +721,7 @@
 			$('#div_fix_letv_button').click(function() {
 				var aid = $('#div_fix_letv_button').attr('aid');
 				var cid = $('#div_fix_letv_button').attr('cid');
-				$('#player_content').html(window_player.fix_letv(aid, cid));
+				$('#player_content #bofqi').html(window_player.fix_letv(aid, cid));
 			});
 			//弹窗播放器收藏功能
 			$('.mark_my_video').click(function() {
@@ -746,14 +825,14 @@
 	if (aid == '') {
 		insert_html('', '');
 		if (GM_getValue('window_play')) {
-			ac_alert('info', '弹窗使能初始化...', 3000);
+			//ac_alert('info', '弹窗使能初始化...', 3000);
 			window_player_init(); //执行弹窗函数
 			addNodeInsertedListener('.vidbox.v-list li a,.bgm-calendar.bgmbox li a,.rlist li a,.rm-list li a,.r-list li a,.top-list li a,.vidbox.zt  .t', function() {
 				window_player_init(); //ajax重新渲染,有可能导致浏览器卡顿，若卡顿请删除此行(仅此一行)
 			});
 		}
 	} else { //cid=3841639
-		ac_alert('info', '视频页面使能初始化...', 3000);
+		//ac_alert('info', '视频页面使能初始化...', 3000);
 		var content = $('#bofqi').html();
 		var cid_reg = /cid=(\d+)/;
 		var cid_array = cid_reg.exec(content);
@@ -778,7 +857,7 @@
 
 	//HTML5弹幕播放
 
-	function html5_cm_play(cid, div, cm, wide) {
+	function html5_cm_play(aid,cid, div, cm, page,width,height,type) {
 		if (typeof(cid) == 'undefined') {
 			cid = $('#div_fix_letv_button').attr('cid');
 		}
@@ -798,8 +877,16 @@
 					} else {
 						var url = durl[0]['url'];
 						if (cm) { //HTML5弹幕播放
+							//摘自http://tieba.baidu.com/p/4355490187
+ 							unsafeWindow.location.href = ['javascript:(function(d){window.loadHTML5=function(g,f){var h=1==Number(f)?"":"#page="+f;$.getJSON("/m/html5?aid="+g+"&page="+f+"&sid="+__GetCookie("sid"),function(a){a.src&&(window.html5data=a,$("#bofqi").html(\'<link type="text/css" href="http://static.hdslb.com/css/simple.v2.min.css" rel="stylesheet"/>\'),$.getScript("http://static.hdslb.com/js/simple.v2.min.js",function(){(new BiliH5Player).create({get_from_local:!0,comment:window.html5data.cid,image:window.html5data.img,video_url:\''+url+'\'})}))})};d&&loadHTML5(d[0].split(\'=\')[1],d[1].split(\'=\')[1])})(document.querySelector(\'[itemprop="embedURL"]\').content.match(/(aid=[^&]*|page=[^&]*)/g));void(0)'].join('');
 						} else { //html5无弹幕播放
-							$(div).html('<video src="' + url + '" controls="controls" autoplay style="width:100%"></video>');
+							if(!type){
+							$(div).css({
+							width: width+"px",
+							height: height+"px"
+							});										
+							}
+							$(div).html('<video src="' + url + '" controls="controls" style="width:100%;height:100%"></video>');
 						}
 
 					}
@@ -810,7 +897,7 @@
 	
 								
 	//css插入
-	var css = '#load_manual_window{z-index:300;width:30px;cursor: pointer;left:40px;bottom:50px;position:fixed;padding: 0px 0px 10px;transition: all 0.1s linear 0s;background: none repeat scroll 0% 0% rgba(0, 0, 0, 0.5);color: #FFF;border: medium none;}#load_manual_window:hover{background-color: rgba(0, 0, 0, 0.7);}.singleplaybtn{cursor:pointer;box-shadow: 0px 1px 1px rgba(34, 25, 25, 0.4);background:none repeat scroll 0% 0% #684D75!important;border-radius: 4px;line-height: 14px;padding: 1px 3px;text-align: center;font-family: Calibri;font-size: 12px;min-width: 18px;}.bfpbtn{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 2px;transition-property:#000,color;transition-duration:0.3s;box-shadow:none;color:#FFF;text-shadow:none;border:medium none;background:none repeat scroll 0% 0% #00A1CB!important;}.bfpbtn.active{background:none repeat scroll 0% 0%  #F489AD!important;}.bfpbtn.normal{background:none repeat scroll 0% 0%  #B9B9B9!important;}.bfpbtn.notice{background-color:#A300C0!important;}.font{font-size:11px!important;}#window_play_list li{float:left;position:relative;width:30em;border-bottom:1px solid #B0C4DE;font:100% Verdana,Geneva,Arial,Helvetica,sans-serif;}.ui.corner.label{height:0px;border-width:0px 3em 3em 0px;border-style:solid;border-top:0px solid transparent;border-bottom:3em solid transparent;border-left:0px solid transparent;border-right-color:rgb(217,92,92)!important;transition:border-color 0.2s ease 0s;position:absolute;content:"";right:0px;top:0px;z-index:-1;width:0px;}.ui.corner.label i{display:inline-block;margin:3px 0.25em 0px 17px;width:1.23em;height:1em;font-weight:800!important;}.dialogcontainter{z-index:20000!important;}.dialogcontainter{height:400px;width:400px;border:1px solid #14495f;position:fixed;font-size:13px;}.dialogtitle{height:26px;width:auto;background-color:#C6C6C6;}.dialogtitleinfo{float:left;height:20px;margin-top:2px;margin-left:10px;line-height:20px;vertical-align:middle;color:#FFFFFF;font-weight:bold;}.dialogtitleico{float:right;height:20px;width:21px;margin-top:2px;margin-right:5px;text-align:center;line-height:20px;vertical-align:middle;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-21px 0px}.dialogbody{padding:10px;width:auto;background-color:#FFFFFF;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}.dialogbottom{bottom:1px;right:1px;cursor:nw-resize;position:absolute;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-42px -10px;width:10px;height:10px;font-size:0;}.button-small{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 5px;}.button-flat-action{transition-duration:0.3s;box-shadow:none;background:none repeat scroll 0% 0% #7DB500;color:#FFF!important;text-shadow:none;border:medium none;border-radius:3px;}.player-list{box-shadow: 3px 3px 13px rgba(34, 25, 25, 0.4);position:fixed;z-index:1000;left:10px;top:50px;width:400px!important;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");min-height:200px;max-height:400px;overflow: auto;}#player_content{position:absolute;top:65px;left:10px;right:10px;bottom:10px;}#window-player{bottom:0;height:100%;left:0;right:0;top:0;width:100%;}.t:hover .single_player{display:inline;}a.single_player{display:none;}#bofqi_embed.hide,#bofqi.hide,#player_content.hide{margin-left:3000px!important;transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}#bofqi_embed,#bofqi,#player_content{transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}';
+	var css = '#load_manual_window{z-index:300;width:30px;cursor: pointer;left:40px;bottom:50px;position:fixed;padding: 0px 0px 10px;transition: all 0.1s linear 0s;background: none repeat scroll 0% 0% rgba(0, 0, 0, 0.5);color: #FFF;border: medium none;}#load_manual_window:hover{background-color: rgba(0, 0, 0, 0.7);}.singleplaybtn{cursor:pointer;box-shadow: 0px 1px 1px rgba(34, 25, 25, 0.4);background:none repeat scroll 0% 0% #684D75!important;border-radius: 4px;line-height: 14px;padding: 1px 3px;text-align: center;font-family: Calibri;font-size: 12px;min-width: 18px;}.bfpbtn{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 2px;transition-property:#000,color;transition-duration:0.3s;box-shadow:none;color:#FFF;text-shadow:none;border:medium none;background:none repeat scroll 0% 0% #00A1CB!important;}.bfpbtn.active{background:none repeat scroll 0% 0%  #F489AD!important;}.bfpbtn.normal{background:none repeat scroll 0% 0%  #B9B9B9!important;}.bfpbtn.notice{background-color:#A300C0!important;}.font{font-size:11px!important;}#window_play_list li{float:left;position:relative;width:30em;border-bottom:1px solid #B0C4DE;font:100% Verdana,Geneva,Arial,Helvetica,sans-serif;}.ui.corner.label{height:0px;border-width:0px 3em 3em 0px;border-style:solid;border-top:0px solid transparent;border-bottom:3em solid transparent;border-left:0px solid transparent;border-right-color:rgb(217,92,92)!important;transition:border-color 0.2s ease 0s;position:absolute;content:"";right:0px;top:0px;z-index:-1;width:0px;}.ui.corner.label i{display:inline-block;margin:3px 0.25em 0px 17px;width:1.23em;height:1em;font-weight:800!important;}.dialogcontainter{z-index:20000!important;}.dialogcontainter{height:400px;width:400px;border:1px solid #14495f;position:fixed;font-size:13px;}.dialogtitle{height:26px;width:auto;background-color:#C6C6C6;}.dialogtitleinfo{float:left;height:20px;margin-top:2px;margin-left:10px;line-height:20px;vertical-align:middle;color:#FFFFFF;font-weight:bold;}.dialogtitleico{float:right;height:20px;width:21px;margin-top:2px;margin-right:5px;text-align:center;line-height:20px;vertical-align:middle;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-21px 0px}.dialogbody{padding:10px;width:auto;background-color:#FFFFFF;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}.dialogbottom{bottom:1px;right:1px;cursor:nw-resize;position:absolute;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-42px -10px;width:10px;height:10px;font-size:0;}.button-small{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 5px;}.button-flat-action{transition-duration:0.3s;box-shadow:none;background:none repeat scroll 0% 0% #7DB500;color:#FFF!important;text-shadow:none;border:medium none;border-radius:3px;}.player-list{box-shadow: 3px 3px 13px rgba(34, 25, 25, 0.4);position:fixed;z-index:1000;left:10px;top:50px;width:400px!important;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");min-height:200px;max-height:400px;overflow: auto;}#player_content #bofqi{position:absolute;top:65px;left:10px;right:10px;bottom:10px;}#window-player{bottom:0;height:100%;left:0;right:0;top:0;width:100%;}.t:hover .single_player{display:inline;}a.single_player{display:none;}#bofqi_embed.hide,#bofqi.hide,#player_content.hide{margin-left:3000px!important;transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}#bofqi_embed,#bofqi,#player_content{transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}';
 	var css1='#notice_area{position:fixed;bottom:24px;left:0;z-index:10;margin:0;padding:0;width:auto;text-align:left;z-index:9999}.notice_item{position:relative;z-index:11;display:table;margin:0 -500px 0;padding:0 8px 0 2px;width:auto;height:auto;border-left:4px solid #288ECF;border-radius:1px;background-color:#3A9BD9;box-shadow:0 1px 3px rgba(0,0,0,.302);color:#FFF;white-space:pre-wrap;word-break:break-all;font-weight:700;font-size:12px;line-height:24px;transition:all .5s ease 0s}.notice_success{background:#54A954 none repeat scroll 0 0;border-left:4px solid #54A954}.notice_error{background:#C13932 none repeat scroll 0 0;border-left:4px solid #C13932}.notice_info{background:#58BDDB none repeat scroll 0 0;border-left:4px solid #58BDDB}.notice_warn{background:#F9A125 none repeat scroll 0 0;border-left:4px solid #F9A125}.notice_inverse{background:#262626 none repeat scroll 0 0;border-left:4px solid #262626}.notice_normal{background:#004FCC none repeat scroll 0 0;border-left:4px solid #004FCC}';//这是仿ac娘消息框的UI
 	GM_addStyle(css);GM_addStyle(css1);
 
@@ -826,9 +913,9 @@ this._body.style.height=this.Height-this.Titleheight-parseInt(CurrentStyle(this.
 this._Css=isdrag?{x:"left",y:"top"}:{x:"width",y:"height"}
 this._dragobj.style.zIndex=++Dialog.Zindex;this._isdrag=isdrag;this._x=isdrag?(e.clientX-this._dragobj.offsetLeft||0):(this._dragobj.offsetLeft||0);this._y=isdrag?(e.clientY-this._dragobj.offsetTop||0):(this._dragobj.offsetTop||0);if(isIE){addListener(this._dragobj,"losecapture",this._fS);this._dragobj.setCapture();}else{e.preventDefault();addListener(window,"blur",this._fS);}
 addListener(document,'mousemove',this._fM);addListener(document,'mouseup',this._fS);if(GM_getValue('init360')==1)$("#player_content").addClass("hide");},Move:function(e){window.getSelection?window.getSelection().removeAllRanges():document.selection.empty();var i_x=e.clientX-this._x,i_y=e.clientY-this._y;this._dragobj.style[this._Css.x]=(this._isdrag?Math.max(i_x,0):Math.max(i_x,this.Minwidth))+'px';this._dragobj.style[this._Css.y]=(this._isdrag?Math.max(i_y,0):Math.max(i_y,this.Minheight))+'px'
-if(!this._isdrag)this._body.style.height=Math.max(i_y-this.Titleheight,this.Minheight-this.Titleheight)-2*parseInt(CurrentStyle(this._body).paddingLeft)+'px';},Stop:function(){$("#player_content").removeClass("hide");removeListener(document,'mousemove',this._fM);removeListener(document,'mouseup',this._fS);$('#player_content').attr('width',$('.dialogcontainter').width()-20);$('#player_content').css('width',$('.dialogcontainter').width()-20+'px');$('#player_content .player').attr('width',$('.dialogcontainter').width()-20);GM_setValue('player_width',($('.dialogcontainter').width()-20));$('#player_content').attr('height',$('.dialogcontainter').height()-70);$('#player_content').css('height',$('.dialogcontainter').height()-70+'px');$('#player_content .player').attr('height',$('.dialogcontainter').height()-70);GM_setValue('player_height',($('.dialogcontainter').height()-70));GM_setValue('div_left',($('.dialogcontainter').offset().left));if(isIE){removeListener(this._dragobj,"losecapture",this._fS);this._dragobj.releaseCapture();}else{removeListener(window,"blur",this._fS);};}})
+if(!this._isdrag)this._body.style.height=Math.max(i_y-this.Titleheight,this.Minheight-this.Titleheight)-2*parseInt(CurrentStyle(this._body).paddingLeft)+'px';},Stop:function(){$("#player_content").removeClass("hide");removeListener(document,'mousemove',this._fM);removeListener(document,'mouseup',this._fS);$('#player_content #bofqi').attr('width',$('.dialogcontainter').width()-20);$('#player_content #bofqi').css('width',$('.dialogcontainter').width()-20+'px');$('#player_content .player').css('width',$('.dialogcontainter').width()-20);GM_setValue('player_width',($('.dialogcontainter').width()-20));$('#player_content #bofqi').attr('height',$('.dialogcontainter').height()-70);$('#player_content #bofqi').css('height',$('.dialogcontainter').height()-70+'px');$('#player_content .player').css('height',$('.dialogcontainter').height()-70);GM_setValue('player_height',($('.dialogcontainter').height()-70));GM_setValue('div_left',($('.dialogcontainter').offset().left));if(isIE){removeListener(this._dragobj,"losecapture",this._fS);this._dragobj.releaseCapture();}else{removeListener(window,"blur",this._fS);};}})
 function creat(title,content){$('.dialogcontainter').remove();new Dialog({Info:title=title,Left:GM_getValue('div_left'),Top:50,Width:(GM_getValue('player_width')+20),Height:(GM_getValue('player_height')+90),Content:content,Zindex:(2000)});i++;left+=10;}
-	
+
 	function addNodeInsertedListener(elCssPath,handler,executeOnce,noStyle){var animName="anilanim",prefixList=["-o-","-ms-","-khtml-","-moz-","-webkit-",""],eventTypeList=["animationstart","webkitAnimationStart","MSAnimationStart","oAnimationStart"],forEach=function(array,func){for(var i=0,l=array.length;i<l;i++){func(array[i]);}};if(!noStyle){var css=elCssPath+"{",css2="";forEach(prefixList,function(prefix){css+=prefix+"animation-duration:.001s;"+prefix+"animation-name:"+animName+";";css2+="@"+prefix+"keyframes "+animName+"{from{opacity:.9;}to{opacity:1;}}";});css+="}"+css2;GM_addStyle(css);}
 	if(handler){var bindedFunc=function(e){var els=document.querySelectorAll(elCssPath),tar=e.target,match=false;if(els.length!==0){forEach(els,function(el){if(tar===el){if(executeOnce){removeNodeInsertedListener(bindedFunc);}
 	handler.call(tar,e);return;}});}};forEach(eventTypeList,function(eventType){document.addEventListener(eventType,bindedFunc,false);});return bindedFunc;}}

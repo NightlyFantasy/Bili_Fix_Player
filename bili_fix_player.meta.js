@@ -5,7 +5,8 @@
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video|search|sp).*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video|search|sp).*$/
 // @include     http://www.bilibili.com/
-// @version     3.9(charlotte)
+// @include     http://www.bilibili.com/bangumi/*
+// @version     3.9.4
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @require http://static.hdslb.com/js/jquery.min.js
