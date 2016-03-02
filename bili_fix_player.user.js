@@ -4,9 +4,10 @@
 // @description 修复B站播放器,黑科技,列表页、搜索页弹窗,破乐视限制,提供高清、低清晰源下载,弹幕下载
 // @include     /^.*\.bilibili\.(tv|com|cn)\/(video|search|sp).*$/
 // @include     /^.*bilibili\.kankanews\.com\/(video|search|sp).*$/
-// @include     http://www.bilibili.com/
+// @include     /http://www.bilibili.com/(#page=*)?/
 // @include     http://www.bilibili.com/bangumi/*
-// @version     3.9.4
+// @include  	  http://search.bilibili.com*
+// @version     3.9.4.b1
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @require http://static.hdslb.com/js/jquery.min.js
@@ -19,13 +20,14 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
-3.9.4试运行版：增加了一个B站官方的弹幕播放器，神曲you！
-增加bangumi番剧页面弹窗
+3.9.4.b1试运行版：1:增加了一个B站官方的弹幕播放器！
+2:修复HTML5播放器的弹窗，该播放器在火狐下有异常，即暂停和播放异常，需要点击屏幕并按下空格键，但在chrome下完全正常，233我本人不太会修复权限之类的BUG；
+3:html5播放器在搜索页面无法使用，原因是搜索页面的二级域名与主域名不同导致脚本请求跨域，偷懒不修复233
 B站官方的弹幕播放器摘自http://tieba.baidu.com/p/4355490187谷歌卫士
 */
 (function() {
 	//初始化 init
-	if (GM_getValue('init') == undefined || GM_getValue('version') != '3.9.4') { //初始化优化，只查询一次数据库
+	if (GM_getValue('init') == undefined || GM_getValue('version') != '3.9.4.b1') { //初始化优化，只查询一次数据库
 		if (GM_getValue('version') == undefined)
 			GM_setValue('version', 1); //版本号
 		if (GM_getValue('auto') == undefined)
@@ -59,11 +61,11 @@ B站官方的弹幕播放器摘自http://tieba.baidu.com/p/4355490187谷歌卫�
 		GM_setValue('init', 1);
 	}
 	//欢迎屏幕
-	var version = '3.9.4';
+	var version = '3.9.4.b1';
 	var local_version = GM_getValue('version');
 	if (version != local_version) {
 		alert('\n\
-				1:感谢使用Bili Fix Player版本号3.9.4试运行版：增加了一个B站官方的弹幕播放器，神曲you！\n');
+				1:感谢使用Bili Fix Player版本号3.9.4.b1试运行版：增加了一个B站官方的弹幕播放器;\n2:修复HTML5播放器的弹窗，该播放器在火狐下有异常，即暂停和播放异常，需要点击屏幕并按下空格键，但在chrome下完全正常，233我本人不太会修复权限之类的BUG；\n3:html5播放器在搜索页面无法使用，原因是搜索页面的二级域名与主域名不同导致脚本请求跨域，偷懒不修复233');
 		GM_setValue('version', version);
 	}
 	fix_player_fullwin = {
@@ -601,7 +603,7 @@ B站官方的弹幕播放器摘自http://tieba.baidu.com/p/4355490187谷歌卫�
 			});
 
 		//搜索列表弹窗UI
-		$('.searchlist li a').each(
+		$('#video-list li .title').each(
 			function() {
 				if (typeof($(this).attr('has_window_btn')) == 'undefined') {
 					$(this).attr('has_window_btn', 'true');
@@ -610,10 +612,10 @@ B站官方的弹幕播放器摘自http://tieba.baidu.com/p/4355490187谷歌卫�
 					var content = pattern.exec(href);
 					var aid = content ? (content[1]) : '';
 					if (aid != '') {
-						var title = $(this).parent('li').find('.t').html();
-						$('.searchlist li .t').css('display', 'inline'); //不换行
-						$(this).parent('li').find('.t span').after('<a class="single_player singleplaybtn searchlist" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
-						$(this).parent('li').find('.t a').click(function() {
+						var title = $(this).html();
+						$('#video-list li .title').css('display', 'inline'); //不换行
+						$(this).prepend('<a class="single_player singleplaybtn searchlist" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
+						$(this).find('a').click(function() {
 							single_player(aid, title)
 						});
 					}
@@ -658,6 +660,25 @@ B站官方的弹幕播放器摘自http://tieba.baidu.com/p/4355490187谷歌卫�
 			});
 		//旧版首页分区列表
 		$('.video  li a,.video-wrapper li a').each(
+			function() {
+				if (typeof($(this).attr('has_window_btn')) == 'undefined') {
+					$(this).attr('has_window_btn', 'true');
+					var href = $(this).attr('href');
+					var pattern = /\/video\/av(\d+)\//ig;
+					var content = pattern.exec(href);
+					var aid = content ? (content[1]) : '';
+					if (aid != '') {
+						var title = $(this).find('.t').html();
+						$(this).find('.t').prepend('<a class="single_player singleplaybtn oldlifenqu" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
+						$(this).find('.t a').click(function() {
+							single_player(aid, title)
+						});
+					}
+				}
+			});
+			
+		//2016新列表
+		$('.v-list li a').each(
 			function() {
 				if (typeof($(this).attr('has_window_btn')) == 'undefined') {
 					$(this).attr('has_window_btn', 'true');
@@ -731,7 +752,7 @@ B站官方的弹幕播放器摘自http://tieba.baidu.com/p/4355490187谷歌卫�
 					url: 'http://www.bilibili.com/m/stow',
 					data: 'dopost=save&aid=' + aid + '&stow_target=stow&ajax=1',
 					success: function(r) {
-						ac_alert('success', '收藏成功', 3000);
+						ac_alert('success', '收藏成功！！！！("▔□▔)/', 3000);
 					},
 					error: function(r) {
 						//alert('出错，请重试！');
@@ -827,7 +848,7 @@ B站官方的弹幕播放器摘自http://tieba.baidu.com/p/4355490187谷歌卫�
 		if (GM_getValue('window_play')) {
 			//ac_alert('info', '弹窗使能初始化...', 3000);
 			window_player_init(); //执行弹窗函数
-			addNodeInsertedListener('.vidbox.v-list li a,.bgm-calendar.bgmbox li a,.rlist li a,.rm-list li a,.r-list li a,.top-list li a,.vidbox.zt  .t', function() {
+			addNodeInsertedListener('.vidbox.v-list li a,.bgm-calendar.bgmbox li a,.rlist li a,.rm-list li a,.r-list li a,.top-list li a,.vidbox.zt  .t,#video-list li a', function() {
 				window_player_init(); //ajax重新渲染,有可能导致浏览器卡顿，若卡顿请删除此行(仅此一行)
 			});
 		}
@@ -871,14 +892,24 @@ B站官方的弹幕播放器摘自http://tieba.baidu.com/p/4355490187谷歌卫�
 				if (responseDetails.status == 200) {
 					var content = responseDetails.responseText;
 					var c = eval('(' + content + ')');
+					console.log(c);
 					var durl = c.durl;
 					if (typeof(durl) == 'undefined') {
 						ac_alert('error', 'bili脚本提示：API返回错误：api调用失败，无法解析，请重试一次！', 3000);
 					} else {
 						var url = durl[0]['url'];
 						if (cm) { //HTML5弹幕播放
+							if(div=='#bofqi'){//视频页面
 							//摘自http://tieba.baidu.com/p/4355490187
- 							unsafeWindow.location.href = ['javascript:(function(d){window.loadHTML5=function(g,f){var h=1==Number(f)?"":"#page="+f;$.getJSON("/m/html5?aid="+g+"&page="+f+"&sid="+__GetCookie("sid"),function(a){a.src&&(window.html5data=a,$("#bofqi").html(\'<link type="text/css" href="http://static.hdslb.com/css/simple.v2.min.css" rel="stylesheet"/>\'),$.getScript("http://static.hdslb.com/js/simple.v2.min.js",function(){(new BiliH5Player).create({get_from_local:!0,comment:window.html5data.cid,image:window.html5data.img,video_url:\''+url+'\'})}))})};d&&loadHTML5(d[0].split(\'=\')[1],d[1].split(\'=\')[1])})(document.querySelector(\'[itemprop="embedURL"]\').content.match(/(aid=[^&]*|page=[^&]*)/g));void(0)'].join('');
+ 							unsafeWindow.location.href = ['javascript:(function(d){window.loadHTML5=function(g,f){var h=1==Number(f)?"":"#page="+f;$.getJSON("http://www.bilibili.com/m/html5?aid="+g+"&page="+f+"&sid="+__GetCookie("sid"),function(a){a.src&&(window.html5data=a,$("#bofqi").html(\'<link type="text/css" href="http://static.hdslb.com/css/simple.v2.min.css" rel="stylesheet"/>\'),$.getScript("http://static.hdslb.com/js/simple.v2.min.js",function(){(new BiliH5Player).create({get_from_local:!0,comment:window.html5data.cid,image:window.html5data.img,video_url:\''+url+'\'})}))})};d&&loadHTML5(d[0].split(\'=\')[1],d[1].split(\'=\')[1])})(document.querySelector(\'[itemprop="embedURL"]\').content.match(/(aid=[^&]*|page=[^&]*)/g));void(0)'].join('');
+							}else{//弹窗页面
+							unsafeWindow.location.href = ['javascript:function loadHTML5(){$.getJSON("http://www.bilibili.com/m/html5?aid='+aid+'&page='+page+'&sid="+__GetCookie("sid"),function(a){a.src&&(window.html5data=a,$("#bofqi").html(\'<link type="text/css" href="http://static.hdslb.com/css/simple.v2.min.css" rel="stylesheet"/>\'),$.getScript("http://static.hdslb.com/js/simple.v2.min.js",function(){(new BiliH5Player).create({get_from_local:!0,comment:\'http://comment.bilibili.com/'+cid+'.xml\',image:window.html5data.img,video_url:\''+url+'\'})}))})};loadHTML5();void(0)'].join('');
+							//console.log('javascript:function loadHTML5(){$.getJSON("http://www.bilibili.com/m/html5?aid='+aid+'&page='+page+'&sid="+__GetCookie("sid"),function(a){a.src&&(window.html5data=a,$("#bofqi").html(\'<link type="text/css" href="http://static.hdslb.com/css/simple.v2.min.css" rel="stylesheet"/>\'),$.getScript("http://static.hdslb.com/js/simple.v2.min.js",function(){(new BiliH5Player).create({get_from_local:!0,comment:\'http://comment.bilibili.com/'+cid+'.xml\',image:window.html5data.img,video_url:\''+url+'\'})}))})};loadHTML5();void(0)');
+							$(div).css({
+							width: width+"px",
+							height: height+"px"
+							});
+							}
 						} else { //html5无弹幕播放
 							if(!type){
 							$(div).css({
@@ -888,7 +919,6 @@ B站官方的弹幕播放器摘自http://tieba.baidu.com/p/4355490187谷歌卫�
 							}
 							$(div).html('<video src="' + url + '" controls="controls" style="width:100%;height:100%"></video>');
 						}
-
 					}
 				}
 			}
@@ -897,7 +927,7 @@ B站官方的弹幕播放器摘自http://tieba.baidu.com/p/4355490187谷歌卫�
 	
 								
 	//css插入
-	var css = '#load_manual_window{z-index:300;width:30px;cursor: pointer;left:40px;bottom:50px;position:fixed;padding: 0px 0px 10px;transition: all 0.1s linear 0s;background: none repeat scroll 0% 0% rgba(0, 0, 0, 0.5);color: #FFF;border: medium none;}#load_manual_window:hover{background-color: rgba(0, 0, 0, 0.7);}.singleplaybtn{cursor:pointer;box-shadow: 0px 1px 1px rgba(34, 25, 25, 0.4);background:none repeat scroll 0% 0% #684D75!important;border-radius: 4px;line-height: 14px;padding: 1px 3px;text-align: center;font-family: Calibri;font-size: 12px;min-width: 18px;}.bfpbtn{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 2px;transition-property:#000,color;transition-duration:0.3s;box-shadow:none;color:#FFF;text-shadow:none;border:medium none;background:none repeat scroll 0% 0% #00A1CB!important;}.bfpbtn.active{background:none repeat scroll 0% 0%  #F489AD!important;}.bfpbtn.normal{background:none repeat scroll 0% 0%  #B9B9B9!important;}.bfpbtn.notice{background-color:#A300C0!important;}.font{font-size:11px!important;}#window_play_list li{float:left;position:relative;width:30em;border-bottom:1px solid #B0C4DE;font:100% Verdana,Geneva,Arial,Helvetica,sans-serif;}.ui.corner.label{height:0px;border-width:0px 3em 3em 0px;border-style:solid;border-top:0px solid transparent;border-bottom:3em solid transparent;border-left:0px solid transparent;border-right-color:rgb(217,92,92)!important;transition:border-color 0.2s ease 0s;position:absolute;content:"";right:0px;top:0px;z-index:-1;width:0px;}.ui.corner.label i{display:inline-block;margin:3px 0.25em 0px 17px;width:1.23em;height:1em;font-weight:800!important;}.dialogcontainter{z-index:20000!important;}.dialogcontainter{height:400px;width:400px;border:1px solid #14495f;position:fixed;font-size:13px;}.dialogtitle{height:26px;width:auto;background-color:#C6C6C6;}.dialogtitleinfo{float:left;height:20px;margin-top:2px;margin-left:10px;line-height:20px;vertical-align:middle;color:#FFFFFF;font-weight:bold;}.dialogtitleico{float:right;height:20px;width:21px;margin-top:2px;margin-right:5px;text-align:center;line-height:20px;vertical-align:middle;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-21px 0px}.dialogbody{padding:10px;width:auto;background-color:#FFFFFF;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}.dialogbottom{bottom:1px;right:1px;cursor:nw-resize;position:absolute;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-42px -10px;width:10px;height:10px;font-size:0;}.button-small{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 5px;}.button-flat-action{transition-duration:0.3s;box-shadow:none;background:none repeat scroll 0% 0% #7DB500;color:#FFF!important;text-shadow:none;border:medium none;border-radius:3px;}.player-list{box-shadow: 3px 3px 13px rgba(34, 25, 25, 0.4);position:fixed;z-index:1000;left:10px;top:50px;width:400px!important;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");min-height:200px;max-height:400px;overflow: auto;}#player_content #bofqi{position:absolute;top:65px;left:10px;right:10px;bottom:10px;}#window-player{bottom:0;height:100%;left:0;right:0;top:0;width:100%;}.t:hover .single_player{display:inline;}a.single_player{display:none;}#bofqi_embed.hide,#bofqi.hide,#player_content.hide{margin-left:3000px!important;transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}#bofqi_embed,#bofqi,#player_content{transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}';
+	var css = '#load_manual_window{z-index:300;width:30px;cursor: pointer;left:40px;bottom:50px;position:fixed;padding: 0px 0px 10px;transition: all 0.1s linear 0s;background: none repeat scroll 0% 0% rgba(0, 0, 0, 0.5);color: #FFF;border: medium none;}#load_manual_window:hover{background-color: rgba(0, 0, 0, 0.7);}.singleplaybtn{cursor:pointer;box-shadow: 0px 1px 1px rgba(34, 25, 25, 0.4);background:none repeat scroll 0% 0% #684D75!important;border-radius: 4px;line-height: 14px;padding: 1px 3px;text-align: center;font-family: Calibri;font-size: 12px;min-width: 18px;}.bfpbtn{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 2px;transition-property:#000,color;transition-duration:0.3s;box-shadow:none;color:#FFF;text-shadow:none;border:medium none;background:none repeat scroll 0% 0% #00A1CB!important;}.bfpbtn.active{background:none repeat scroll 0% 0%  #F489AD!important;}.bfpbtn.normal{background:none repeat scroll 0% 0%  #B9B9B9!important;}.bfpbtn.notice{background-color:#A300C0!important;}.font{font-size:11px!important;}#window_play_list li{float:left;position:relative;width:30em;border-bottom:1px solid #B0C4DE;font:100% Verdana,Geneva,Arial,Helvetica,sans-serif;}.ui.corner.label{height:0px;border-width:0px 3em 3em 0px;border-style:solid;border-top:0px solid transparent;border-bottom:3em solid transparent;border-left:0px solid transparent;border-right-color:rgb(217,92,92)!important;transition:border-color 0.2s ease 0s;position:absolute;content:"";right:0px;top:0px;z-index:-1;width:0px;}.ui.corner.label i{display:inline-block;margin:3px 0.25em 0px 17px;width:1.23em;height:1em;font-weight:800!important;}.dialogcontainter{z-index:20000!important;}.dialogcontainter{height:400px;width:400px;border:1px solid #14495f;position:fixed;font-size:13px;}.dialogtitle{height:26px;width:auto;background-color:#C6C6C6;}.dialogtitleinfo{float:left;height:20px;margin-top:2px;margin-left:10px;line-height:20px;vertical-align:middle;color:#FFFFFF;font-weight:bold;}.dialogtitleico{float:right;height:20px;width:21px;margin-top:2px;margin-right:5px;text-align:center;line-height:20px;vertical-align:middle;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-21px 0px}.dialogbody{padding:10px;width:auto;background-color:#FFFFFF;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");}.dialogbottom{bottom:1px;right:1px;cursor:nw-resize;position:absolute;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.gif");background-position:-42px -10px;width:10px;height:10px;font-size:0;}.button-small{font-size:12px;height:25.6px;line-height:25.6px;padding:0px 5px;}.button-flat-action{transition-duration:0.3s;box-shadow:none;background:none repeat scroll 0% 0% #7DB500;color:#FFF!important;text-shadow:none;border:medium none;border-radius:3px;}.player-list{box-shadow: 3px 3px 13px rgba(34, 25, 25, 0.4);position:fixed;z-index:1000;left:10px;top:50px;width:400px!important;background-image:url("http://nightlyfantasy.github.io/Bili_Fix_Player/bg.png");min-height:200px;max-height:400px;overflow: auto;}#player_content #bofqi{position:absolute;top:65px;left:10px;right:10px;bottom:10px;}#window-player{bottom:0;height:100%;left:0;right:0;top:0;width:100%;}.title:hover .single_player{display:inline;}.t:hover .single_player{display:inline;}a.single_player{display:none;}#bofqi_embed.hide,#bofqi.hide,#player_content.hide{margin-left:3000px!important;transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}#bofqi_embed,#bofqi,#player_content{transition:0.5s;-moz-transition:0.5s;-webkit-transition:0.5s;-o-transition:0.5s;}';
 	var css1='#notice_area{position:fixed;bottom:24px;left:0;z-index:10;margin:0;padding:0;width:auto;text-align:left;z-index:9999}.notice_item{position:relative;z-index:11;display:table;margin:0 -500px 0;padding:0 8px 0 2px;width:auto;height:auto;border-left:4px solid #288ECF;border-radius:1px;background-color:#3A9BD9;box-shadow:0 1px 3px rgba(0,0,0,.302);color:#FFF;white-space:pre-wrap;word-break:break-all;font-weight:700;font-size:12px;line-height:24px;transition:all .5s ease 0s}.notice_success{background:#54A954 none repeat scroll 0 0;border-left:4px solid #54A954}.notice_error{background:#C13932 none repeat scroll 0 0;border-left:4px solid #C13932}.notice_info{background:#58BDDB none repeat scroll 0 0;border-left:4px solid #58BDDB}.notice_warn{background:#F9A125 none repeat scroll 0 0;border-left:4px solid #F9A125}.notice_inverse{background:#262626 none repeat scroll 0 0;border-left:4px solid #262626}.notice_normal{background:#004FCC none repeat scroll 0 0;border-left:4px solid #004FCC}';//这是仿ac娘消息框的UI
 	GM_addStyle(css);GM_addStyle(css1);
 
