@@ -6,22 +6,30 @@
 // @include     /^.*bilibili\.kankanews\.com\/(video|search|sp).*$/
 // @include     /http://www.bilibili.com/(#page=*)?/
 // @include     http://www.bilibili.com/bangumi/*
+// @include     http://bangumi.bilibili.com/anime/v/*
 // @include  	  http://search.bilibili.com*
-// @version     4.0.1
+// @version     4.0.2
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @require http://static.hdslb.com/js/jquery.min.js
 // @require https://greasyfork.org/scripts/19694-abplayer/code/ABPlayer.js?version=125788
 // @require https://greasyfork.org/scripts/19695-commentcorelibrary/code/CommentCoreLibrary.js?version=125789
 // @grant       GM_xmlhttpRequest
-// @grant       get_bfp_config
-// @grant       set_bfp_config
+// @grant       GM_getValue
+// @grant       GM_setValue
 // @grant       GM_addStyle
 // @grant       unsafeWindow
 // @author     绯色
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
+v4.0.2版说明[20160607]：
+1：祝君高考成功！
+2：修复弹窗开启关闭故障，原因：博主把参数名更换，然后有一个参数是play忘记改成player
+3：脚本存储改回原来的GM存储，原因：localStorage在跨域的时候（比如B站二级域名）都会导致脚本存储不统一
+4：增加对bangumi新番页面的支持，至于弹窗功能，是个大坑，很少人需要，故此页面不再增加弹窗功能
+5：增加小型播放器与其他功能组合的选项
+
 v4.0.1版新增功能[20160530]：
 1：自动网页全屏、默认关闭弹幕（已经删除），来自火狐吧谷歌卫士的bilibili_autowide脚本、修复appkey失效
 2：增加一个ABP-HTML5播放器，来自脚本https://greasyfork.org/zh-CN/scripts/19696-bili-html5
@@ -32,7 +40,7 @@ license by bangumi.ga
 */
 (function() {
 	//初始化 init
-	if (localStorage.getItem("bfp_config") === null) {
+	if (GM_getValue("bfp_config") ==undefined) {
 		var _config = {
 			'init' : 1,
 			'compatible_360' : 0, //360兼容
@@ -50,17 +58,18 @@ license by bangumi.ga
 			'flash_player_showComments' : 1, //默认弹幕显示-来自贴吧谷歌卫士
 			'flash_player_auto_fullwindow' : 0, //自动网页全屏-来自谷歌卫士
 		};
-		localStorage.setItem('bfp_config', JSON.stringify(_config));
+		GM_setValue('bfp_config', JSON.stringify(_config));
 	}
 
 	//欢迎屏幕
-	var version = '4.0.1';
+	var version = '4.0.2';
 	var local_version = get_bfp_config('version');
 	if (version != local_version) {
-		alert('感谢使用Bili Fix Player版本号v4.0.1版RE0：v4.0.1版新增功能[20160530]：\n\
-							  1：自动网页全屏、默认关闭弹幕（已经删除），来自火狐吧谷歌卫士的bilibili_autowide脚本、修复appkey失效\n\
-							  2：增加一个ABP-HTML5播放器，来自脚本https://greasyfork.org/zh-CN/scripts/19696-bili-html5\n\
-							  3：修改脚本存储位置为localStorage，清理cookie会导致存储丢失');
+		alert('感谢使用Bili Fix Player版本号v4.0.2版RE1：v4.0.2版新增功能[20160530]：\n\
+1：祝君高考成功！\n\
+2：修复弹窗开启关闭故障，原因：博主把参数名更换，然后有一个参数是play忘记改成player\n\
+3：脚本存储改回原来的GM存储，原因：localStorage在跨域的时候（比如B站二级域名）都会导致脚本存储不统一\n\
+4：增加对bangumi新番页面的支持，至于弹窗功能，是个大坑，很少人需要，故此页面不再增加弹窗功能');
 		set_bfp_config('version', version);
 	}
 	fix_player_fullwin = {
@@ -112,14 +121,19 @@ license by bangumi.ga
 	 */
 	function get_bfp_config(key) {
 		//console.log(JSON.parse(localStorage.getItem("bfp_config"))[key]);
-		return JSON.parse(localStorage.getItem("bfp_config"))[key];
+		//return JSON.parse(localStorage.getItem("bfp_config"))[key];
+		//console.log(GM_getValue("bfp_config"));
+		return JSON.parse(GM_getValue("bfp_config"))[key];
+		
 	}
 
 	function set_bfp_config(key, value) {
-		var current_config = JSON.parse(localStorage.getItem("bfp_config"));
+		//var current_config = JSON.parse(localStorage.getItem("bfp_config"));
+		var current_config = JSON.parse(GM_getValue("bfp_config"));
 		current_config[key] = value;
 		//console.log(current_config);
-		localStorage.setItem('bfp_config', JSON.stringify(current_config));
+		//localStorage.setItem('bfp_config', JSON.stringify(current_config));
+		GM_setValue('bfp_config', JSON.stringify(current_config));
 		return true;
 	}
 	/**
@@ -134,13 +148,13 @@ license by bangumi.ga
 			var fix_type = '强制默认B站播放器[与其他功能组合]';
 			break;
 		case 3:
-			var fix_type = '小型默认B站播放器[兼容火狐魔镜]';
+			var fix_type = '小型B站FLASH播放器[兼容火狐魔镜、与其他功能组合]';
 			break;
 		case 4:
 			var fix_type = '原版B站HTML5弹幕播放器[谷歌卫士提供]';
 			break;
 		case 5:
-			var fix_type = 'ABP-HTML5播放器';
+			var fix_type = 'ABP-HTML5播放器[BY颜太虾]';
 			break;
 		default:
 			var fix_type = '按需替换[替换非B站播放器,此时自动宽屏功能无效]';
@@ -155,7 +169,7 @@ license by bangumi.ga
 		var flash_player_auto_fullwindow = get_bfp_config('flash_player_auto_fullwindow') ? '已默认网页全屏' : '已关闭网页全屏';
 		var div = '<li class="m-i home" id="bili-fix-player-installed"><a class="i-link"><em style="color:red;font-weight:bold">脚本</em></a><div >\
 															<ul class="i_num i_num_a blborder" id="bili_fix_script">\
-															<li><a target="_blank" href="http://bangumi.ga">B站播放器增强脚本V4.0.1:©妖夏&&百度火狐吧出品</a><em></em></li>\
+															<li><a target="_blank" href="http://bangumi.ga">B站播放器增强脚本V4.0.2:©妖夏&&百度火狐吧出品</a><em></em></li>\
 															<li><a target="_blank" href="http://bangumi.ga/361.html">若无限小电视则尝试关闭修复-BUG反馈</a><em></em></li>\
 															<li><a><b>360</b>浏览器兼容[非360勿开]:<bl id="init360" class="bfpbtn">' + compatible_360 + '</bl></a><em></em></li>\
 															<li><a><b>开启修复</b>(修改后请刷新页面):<bl id="bili_fix" class="bfpbtn">' + enable + '</bl></a><em></em></li>\
@@ -200,8 +214,19 @@ license by bangumi.ga
 				var other_lock = get_bfp_config('flash_player_auto_wide') || !get_bfp_config('flash_player_showComments') || get_bfp_config('flash_player_auto_fullwindow');
 				if (config_val == 'fix_type') {
 					if (other_lock) {
-						ac_alert('warn', '当【自动宽屏】或【自动网页全屏】或者【自动关闭弹幕】任意一个或以上功能打开时，该项目不可选！！！', 6000);
+						ac_alert('warn', '当【自动宽屏】或【自动网页全屏】或者【自动关闭弹幕】任意一个或以上功能打开时，替换模式只能为FLASH播放器！', 6000);
 						var notice = 0;
+						if(get_bfp_config('fix_type')==3){
+						set_bfp_config('fix_type', 2);
+						var j='现在替换为大型B站FLASH播放器！';
+						ac_alert('success', j, 6000);
+						}else{
+						set_bfp_config('fix_type', 3);
+						var j='现在替换为小型B站FLASH播放器！';
+						ac_alert('success', j, 6000);
+						}
+						$(selector).html(j);
+						$(selector).toggleClass("active");
 					} else {
 						if (get_bfp_config('fix_type') >= 5 || typeof(get_bfp_config('fix_type')) == 'undefined') { //超过4自动复位成按需替换
 							set_bfp_config('fix_type', 1);
@@ -211,10 +236,10 @@ license by bangumi.ga
 						var s = '当前设置为-';
 						switch (get_bfp_config('fix_type')) {
 						case 2:
-							s += '强制默认B站播放器[与其他功能组合]';
+							s += '强制默认B站FLASH播放器[与其他功能组合]';
 							break;
 						case 3:
-							s += '小型默认B站播放器[兼容火狐魔镜]';
+							s += '小型B站FLASH播放器[兼容火狐魔镜、与其他功能组合]';
 							break;
 						case 4:
 							s += '原版B站HTML5弹幕播放器[谷歌卫士提供]';
@@ -228,8 +253,10 @@ license by bangumi.ga
 					}
 				} else {
 					get_bfp_config(config_val) ? set_bfp_config(config_val, 0) : set_bfp_config(config_val, 1);
-					if (get_bfp_config('flash_player_auto_wide') || !get_bfp_config('flash_player_showComments') || get_bfp_config('flash_player_auto_fullwindow'))
-						set_bfp_config('fix_type', 2);
+					if ((get_bfp_config('flash_player_auto_wide') || !get_bfp_config('flash_player_showComments') || get_bfp_config('flash_player_auto_fullwindow'))&&get_bfp_config('fix_type')!=3){
+					set_bfp_config('fix_type', 2);
+					}
+						
 					var s = get_bfp_config(config_val) ? notice1 : notice2;
 				}
 				if (notice) {
@@ -261,7 +288,7 @@ license by bangumi.ga
 		//修复模式
 		event_control.Listener('#fix-type', 'fix_type', '', '');
 		//弹窗播放功能
-		event_control.Listener('#window_play', 'enable_window_play', '当前打开弹窗播放功能,请刷新', '当前关闭弹窗播放功能,请刷新');
+		event_control.Listener('#window_play', 'enable_window_player', '当前打开弹窗播放功能,请刷新', '当前关闭弹窗播放功能,请刷新');
 		//默认弹幕显示
 		event_control.Listener('#flash_player_showComments', 'flash_player_showComments', '当前已默认打开弹幕,请刷新', '当前已默认关闭弹幕,请刷新');
 		//自动网页全屏
@@ -380,12 +407,13 @@ license by bangumi.ga
 			var height = '650px'; //类型1在视频页面。宽度高度固定不变
 			if (get_bfp_config('flash_player_auto_fullwindow')) {
 				var width = '';
-				var height = '';
+				var height = '600px';
 			}
 		} else {
 			var width = get_bfp_config('window_player_width') + 'px';
 			var height = get_bfp_config('window_player_height') + 'px'; //弹窗模式，类型0，宽度高度是自己设置的
 		}
+		console.log(width,height);
 		switch (get_bfp_config('fix_type')) {
 		case 2:
 			$(div).html('<iframe id="bofqi_embed" class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + wide + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" style="width:' + width + ';height:' + height + '"></iframe>');
@@ -393,17 +421,23 @@ license by bangumi.ga
 			if (type && get_bfp_config('flash_player_auto_fullwindow')) {
 				setTimeout(function () {
 					unsafeWindow.player_fullwin(1);
-				}, 5000);
+				}, 6000);
 			}
 			ac_alert('normal', '正在强制替换->[强制默认B站播放器[与其他功能组合]]', 000);
 			break;
 		case 3:
 			$(div).html('<embed class="player" quality="high" allowfullscreen="true" allowscriptaccess="always" type="application/x-shockwave-flash" src="https://static-s.bilibili.com/play.swf" flashvars="cid=' + cid + '&aid=' + aid + wide + '" allowfullscreeninteractive="true" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" style="width:100%;height:100%;" id="bofqi_embed">');
 			$(div).css({
-				width : width,
-				height : height
+				width : width.replace('px',''),
+				height : height.replace('px','')
 			});
-			ac_alert('normal', '正在强制替换->小型默认B站播放器[兼容火狐魔镜]', 3000);
+			//fix_player_fullwin.fix_page();
+			if (type && get_bfp_config('flash_player_auto_fullwindow')) {
+				setTimeout(function () {
+					unsafeWindow.player_fullwin(1);
+				}, 6000);
+			}
+			ac_alert('normal', '正在强制替换->小型B站FLASH播放器[兼容火狐魔镜、与其他功能组合]', 3000);
 			break;
 		case 4:
 			html5_cm_play(aid, cid, div, 1, page, width, height, type);
@@ -471,7 +505,7 @@ license by bangumi.ga
 				init_video_page('未获取[由于已知cid不请求api]', aid, cid, page);
 				ac_alert('success', '此页面cid已知的情况下不请求api', 3000);
 			} else { //cid无法获取的时候请求api
-				var url = 'http://api.bilibili.com/view?type=json&appkey=86385cdc024c0f6c&batch=1&id=' + aid;
+				var url = 'http://api.bilibili.com/view?type=json&appkey=8e9fc618fbd41e28&batch=1&id=' + aid;
 				GM_xmlhttpRequest({
 					method : 'GET',
 					url : url,
@@ -879,6 +913,9 @@ license by bangumi.ga
 	//替换播放器----------------------------
 	//取出aid和分P
 	var url = document.location.href;
+	if(url.match(/(?:bangumi\.bilibili\.com\/anime\/v\/(\d+))/)){
+		url=$('.v-av-link').attr('href');//bangumi页面
+	}
 	var aid_reg = /\/av(\d+)\/(?:index_(\d+)\.html)?/ig;
 	var aid_array = aid_reg.exec(url);
 
@@ -888,7 +925,7 @@ license by bangumi.ga
 	//模仿AC娘的消息通知效果
 	var html = '<div id="notice_area"><div class=" notice_item notice_success" style="display: none">NOTICE-AREA-BASIC-BEGIN</div></div>';
 	$('body').append(html);
-
+	console.log(aid);
 	//播放器的html
 	if (aid == '') {
 		insert_html('', '');
@@ -954,8 +991,8 @@ license by bangumi.ga
 								console.log(width, height, $('#bofqi'));
 								setTimeout(function () {
 									$('#bofqi').css({
-										width : width,
-										height : height
+										width : width.replace('px',''),
+										height : height.replace('px','')
 									});
 								}, 1500);
 
@@ -973,15 +1010,15 @@ license by bangumi.ga
 							GM_addStyle(css3);
 							var inst = ABP.create(document.getElementById('load-player'), {
 									'src' : document.getElementById('video'),
-									'width' : '100%',
-									'height' : '100%'
+									'width' : '640',
+									'height' : '480'
 								});
 							//console.log(div);
 							if (div == '#player_content #bofqi') {
 								setTimeout(function () {
 									$('#bofqi').css({
-										width : width,
-										height : height
+										width : width.replace('px',''),
+										height : height.replace('px','')
 									});
 								}, 1500);
 							}
