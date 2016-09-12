@@ -8,12 +8,13 @@
 // @include     http://www.bilibili.com/bangumi/*
 // @include     http://bangumi.bilibili.com/anime/v/*
 // @include  	  http://search.bilibili.com*
-// @version     4.0.2
+// @version     4.0.3
 // @updateURL   https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.meta.js
 // @downloadURL https://nightlyfantasy.github.io/Bili_Fix_Player/bili_fix_player.user.js
 // @require http://static.hdslb.com/js/jquery.min.js
 // @require https://greasyfork.org/scripts/19694-abplayer/code/ABPlayer.js?version=125788
 // @require https://greasyfork.org/scripts/19695-commentcorelibrary/code/CommentCoreLibrary.js?version=125789
+// @require http://static.hdslb.com/js/md5.js
 // @grant       GM_xmlhttpRequest
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -23,6 +24,13 @@
 // ==/UserScript==
 /**
 出现无法播放情况先关闭自动修复
+
+RE2：v4.0.3版新增功能[20160912]：
+1：修复视频源API获取问题！
+2：移除略为鸡肋的弹窗功能
+3：由于B站现在自带HTML5播放器，本脚本的作用会越来越小，更新可能慢
+4：博主拖延症MAX233333
+
 v4.0.2版说明[20160607]：
 1：祝君高考成功！
 2：修复弹窗开启关闭故障，原因：博主把参数名更换，然后有一个参数是play忘记改成player
@@ -54,7 +62,7 @@ license by bangumi.ga
 			'window_player_height' : 480,
 			'flash_player_auto_wide' : 0, //自动宽屏-来自牙刷科技冻猫
 			'flash_player_auto_focus' : 1, //自动定位播放器--来自火狐吧友
-			'enable_window_player' : 1, //视频弹窗功能-ajax重新渲染会导致渲染卡顿
+			'enable_window_player' : 0, //视频弹窗功能-ajax重新渲染会导致渲染卡顿
 			'flash_player_showComments' : 1, //默认弹幕显示-来自贴吧谷歌卫士
 			'flash_player_auto_fullwindow' : 0, //自动网页全屏-来自谷歌卫士
 		};
@@ -62,60 +70,16 @@ license by bangumi.ga
 	}
 
 	//欢迎屏幕
-	var version = '4.0.2';
+	var version = '4.0.3';
 	var local_version = get_bfp_config('version');
 	if (version != local_version) {
-		alert('感谢使用Bili Fix Player版本号v4.0.2版RE1：v4.0.2版新增功能[20160530]：\n\
-1：祝君高考成功！\n\
-2：修复弹窗开启关闭故障，原因：博主把参数名更换，然后有一个参数是play忘记改成player\n\
-3：脚本存储改回原来的GM存储，原因：localStorage在跨域的时候（比如B站二级域名）都会导致脚本存储不统一\n\
-4：增加对bangumi新番页面的支持，至于弹窗功能，是个大坑，很少人需要，故此页面不再增加弹窗功能');
+		alert('感谢使用Bili Fix Player版本号v4.0.3版RE2：v4.0.3版新增功能[20160912]：\n\
+1：修复视频源API获取问题！\n\
+2：移除略为鸡肋的弹窗功能\n\
+3：由于B站现在自带HTML5播放器，本脚本的作用会越来越小，更新可能慢\n\
+4：博主拖延症MAX233333');
 		set_bfp_config('version', version);
 	}
-	fix_player_fullwin = {
-		fix_init : function () {
-			setTimeout(function () {
-				// 代码来自 http://static.hdslb.com/js/page.arc.js 为了兼容性目的添加了 .tv 相关域名
-				unsafeWindow.location.href = ['javascript: void(function () {var c;',
-					'window.postMessage?(c=function(a){"https://secure.bilibili.com"!=a.origin',
-					'&&"https://secure.bilibili.tv"!=a.origin&&"https://ssl.bilibili.com"!=a.origin',
-					'&&"https://ssl.bilibili.tv"!=a.origin||"secJS:"!=a.data.substr(0,6)',
-					'||eval(a.data.substr(6));',
-					'"undefined"!=typeof console&&console.log(a.origin+": "+a.data)},',
-					'window.addEventListener?window.addEventListener("message",c,!1):',
-					'window.attachEvent&&window.attachEvent("onmessage",c)):',
-					'setInterval(function(){if(evalCode=__GetCookie("__secureJS"))',
-					'{__SetCookie("__secureJS",""),eval(evalCode)}},1000);',
-					'}());'
-				].join('');
-			}, 0);
-		},
-		fix_window : function () {
-			fix_player_fullwin.fix_init();
-			setTimeout(function () {
-				unsafeWindow.location.href = 'javascript:void(' + function () {
-					player_fullwin = function (is_full) {
-						$('.z, .header, .z_top, .footer').css({
-							'display' : is_full ? 'none' : 'block'
-						});
-						$('#window-player,#bofqi,#bofqi_embed').css({
-							'position' : is_full ? 'fixed' : 'static'
-						});
-					}
-				}
-				 + '());';
-			}, 0);
-		},
-		fix_page : function () {
-			fix_player_fullwin.fix_init();
-			setTimeout(function () {
-				location.href = 'javascript:void(' + function () {
-					player_fullwin = unsafeWindow.player_fullwin
-				}
-				 + '());';
-			}, 0);
-		}
-	};
 	/**
 	数据存储IO
 	 */
@@ -174,7 +138,6 @@ license by bangumi.ga
 															<li><a><b>360</b>浏览器兼容[非360勿开]:<bl id="init360" class="bfpbtn">' + compatible_360 + '</bl></a><em></em></li>\
 															<li><a><b>开启修复</b>(修改后请刷新页面):<bl id="bili_fix" class="bfpbtn">' + enable + '</bl></a><em></em></li>\
 															<li><a><b>修复类型</b>选择:<bl id="fix-type" class="bfpbtn">' + fix_type + '</bl></a><em></em></li>\
-															<li><a><b>弹窗播放</b>功能[如果卡顿请关闭]:<bl id="window_play" class="bfpbtn">' + enable_window_player + '</bl></a><em></em></li>\
 															<li><a>视频页<b>自动聚焦</b>到播放器位置:<bl id="auto-locate" class="bfpbtn">' + flash_player_auto_focus + '</bl></a><em></em></li>\
 															<li><a>播放器<b>自动宽屏</b>[自动切换成强制修复]:<bl id="auto-wide" class="bfpbtn">' + flash_player_auto_wide + '</bl></a><em></em></li>\
 															<li><a>FLASH播放器<b>网页全屏</b>[自动切换成强制修复]:<bl id="flash_player_auto_fullwindow" class="bfpbtn">' + flash_player_auto_fullwindow + '</bl></a><em></em></li>\
@@ -190,7 +153,7 @@ license by bangumi.ga
 															</div><em></em></li>\
 															<li><a id="down_cid_xml" target="_blank">弹幕下载</a><em></em></li>'; //<li><a>FLASH播放器<b>默认弹幕显示</b>[自动切换成强制修复]:<bl id="flash_player_showComments" class="bfpbtn">' + flash_player_showComments + '</bl></a><em></em></li>
 		}
-
+		//															<li><a><b>弹窗播放</b>功能[如果卡顿请关闭]:<bl id="window_play" class="bfpbtn">' + enable_window_player + '</bl></a><em></em></li>
 		div += '</ul>\
 								</div>';
 		$('.m-i.home').prop('outerHTML', div);
@@ -322,7 +285,9 @@ license by bangumi.ga
 			if (type == 'HD') {
 				if (!$('#HD-Down').attr('HD')) {
 					ac_alert('info', '正在解析高清下载地址....', 3000);
-					var url = 'http://interface.bilibili.com/playurl?appkey=86385cdc024c0f6c&platform=android&quality=4&cid=' + cid + '&otype=json&platform=android';
+					var params='appkey=85eb6835b0a1034e&cid=' + cid + '&otype=json&platform=android&quality=3&type=mp4';
+					var sign=hex_md5(params + '2ad42749773c441109bdc0191257a664');
+					var url = 'http://interface.bilibili.com/playurl?'+params+'&sign='+sign;
 					GM_xmlhttpRequest({
 						method : 'GET',
 						url : url,
@@ -349,7 +314,9 @@ license by bangumi.ga
 			} else {
 				if (!$('#HD-Down').attr('LD')) {
 					ac_alert('info', '正在解析手机良心画质[最大720P]下载地址....', 3000);
-					var url = 'http://interface.bilibili.com/playurl?platform=android&cid=' + cid + '&quality=4&otype=json&appkey=86385cdc024c0f6c&type=mp4';
+					var params='appkey=85eb6835b0a1034e&cid=' + cid + '&otype=json&platform=android&quality=3&type=mp4';
+					var sign=hex_md5(params + '2ad42749773c441109bdc0191257a664');
+					var url = 'http://interface.bilibili.com/playurl?'+params+'&sign='+sign;
 					GM_xmlhttpRequest({
 						method : 'GET',
 						url : url,
@@ -407,13 +374,13 @@ license by bangumi.ga
 			var height = '650px'; //类型1在视频页面。宽度高度固定不变
 			if (get_bfp_config('flash_player_auto_fullwindow')) {
 				var width = '';
-				var height = '600px';
+				var height = '';//600px
 			}
 		} else {
 			var width = get_bfp_config('window_player_width') + 'px';
 			var height = get_bfp_config('window_player_height') + 'px'; //弹窗模式，类型0，宽度高度是自己设置的
 		}
-		console.log(width,height);
+		//console.log(width,height);
 		switch (get_bfp_config('fix_type')) {
 		case 2:
 			$(div).html('<iframe id="bofqi_embed" class="player" src="https://secure.bilibili.com/secure,cid=' + cid + '&amp;aid=' + aid + wide + '" scrolling="no" border="0" framespacing="0" onload="window.securePlayerFrameLoaded=true" frameborder="no" style="width:' + width + ';height:' + height + '"></iframe>');
@@ -555,300 +522,16 @@ license by bangumi.ga
 		}
 		$('#av_source').attr('cid', cid); //给av_source设置cid
 		$("#app_qrcode_box").before('<div class="block">视频不能播时<b style="color:red"><a href="javascript:void(0)" id="div_fix_letv_button">点我尝试治疗</a></b></div>');
-		$('#div_fix_letv_button').click(function () {
+/* 		$('#div_fix_letv_button').click(function () {
 			$('#bofqi').html(window_player.fix_letv(aid, cid));
-		});
+		}); */
 	}
 
-	//在新番页面，通过弹窗，获取aid,cid然后进行播放
-
-	function aid_build_player(aid) {
-		//aid=971415;这个aid奇葩出错
-		var url = 'http://api.bilibili.com/view?type=json&appkey=8e9fc618fbd41e28&batch=1&id=' + aid;
-		GM_xmlhttpRequest({
-			method : 'GET',
-			url : url,
-			synchronous : false,
-			onload : function (responseDetails) {
-				if (responseDetails.status == 200) {
-					var Content = eval('(' + responseDetails.responseText + ')');
-					var list = Content.list;
-
-					if (typeof(list) != 'undefined') {
-						//默认播放第一个分P-------------------
-						var p = 0;
-						var lp = (typeof(list[p]) == 'undefined') ? list[0] : list[p];
-						var cid = lp.cid;
-						Replace_player(aid, cid, '#player_content #bofqi', 1, 0);
-						$('#div_fix_letv_button').attr('aid', aid);
-						$('#div_fix_letv_button').attr('cid', cid);
-						//分P列表和播放器------------------------------
-						for (var z in list) {
-							if (!isNaN(z)) { //擦，遍历这个数组居然跑出多两个bsearch和binsert字段，明明是数字，处理掉
-								var cid = list[z].cid;
-								var p = parseInt(z) + 1;
-								var title = list[z].part;
-								if (p == 1) {
-									var lclass = "on";
-								} else {
-									var lclass = "";
-								}
-								$('#window_play_list').append('<li class="single_play_list ' + lclass + '" data-field="aid=' + aid + '&cid=' + cid + '&page=' + p + '"><a  href="javascript:void(0);" style="color:#00A6D8;" >[' + p + 'p]' + title + '</a></li>');
-							}
-						}
-						if (!unsafeWindow.player_fullwin)
-							setTimeout(fix_player_fullwin.fix_window, 0);
-						//弹窗的分P播放
-						$('.single_play_list').click(
-							function () {
-							$('#window_play_info').html('正在播放第<span style="color:#DB5140">' + $(this).find('a').html() + '</span>');
-							var info = $(this).attr('data-field');
-							var pattern = /aid=(\d+)&cid=(\d+)&page=(\d+)/ig;
-							var val = pattern.exec(info);
-							var aid = val === null ? '' : val[1];
-							var cid = val === null ? '' : val[2];
-							var page = val === null ? '' : val[3];
-							window.location.hash = "page=" + page;
-							$('#div_fix_letv_button').attr('aid', aid);
-							$('#div_fix_letv_button').attr('cid', cid);
-							Replace_player(aid, cid, '#player_content #bofqi', page, 0);
-						});
-					} else {
-						ac_alert('info', '弹窗解析错误，请关闭弹窗重试，如果再次出现，请直接打开播放页播放', 3000);
-					}
-				}
-			}
-		});
-	}
+	
 	/**
 	-------------------------------控制 Control-------------------------------------
 	 */
 
-	function window_player_init() {
-		//弹窗------------------------------
-		//2015-09-24番剧bangumi页面的弹窗
-		$('#episode_list li .t').each(
-			function () {
-			if (typeof($(this).attr('has_window_btn')) == 'undefined') {
-				$(this).attr('has_window_btn', 'true');
-				var href = $(this).parent('a').attr('href');
-				var pattern = /\/video\/av(\d+)\//ig;
-				var content = pattern.exec(href);
-				var aid = content ? (content[1]) : '';
-				if (aid != '') {
-					var title = $(this).html();
-					$(this).prepend('<a class="single_player singleplaybtn fjlist" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
-					$(this).find('a').click(function () {
-						single_player(aid, title)
-					});
-				}
-			}
-		});
-		//新番列表弹窗UI
-		$('.vd_list .title').each(
-			function () {
-			if (typeof($(this).attr('has_window_btn')) == 'undefined') {
-				$(this).attr('has_window_btn', 'true');
-				var href = $(this).attr('href');
-				var pattern = /\/video\/av(\d+)\//ig;
-				var content = pattern.exec(href);
-				var aid = content ? (content[1]) : '';
-				if (aid != '') {
-					var title = $(this).html();
-					$(this).prepend('<a class="single_player singleplaybtn xflist" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
-					$(this).find('a').click(function () {
-						single_player(aid, title)
-					});
-				}
-			}
-		});
-
-		//搜索列表专题List
-		$('.s_bgmlist li a').each(
-			function () {
-			if (typeof($(this).attr('has_window_btn')) == 'undefined') {
-				$(this).attr('has_window_btn', 'true');
-				var href = $(this).attr('href');
-				var pattern = /\/video\/av(\d+)/ig;
-				var content = pattern.exec(href);
-				var aid = content ? (content[1]) : '';
-				$('.s_v_l li .s_bgmlist ul li a').css('display', 'inline'); //防止A标签换行导致无法点击
-				if (aid != '') {
-					var title = '第<' + $(this).html() + '>P';
-					$(this).parent('li').prepend('<bl class="single_player singleplaybtn searchlistzt" style="color:white;" data-field="' + aid + '">弹▶</bl>&nbsp;&nbsp;');
-					$(this).parent('li').find('bl').click(function () {
-						single_player(aid, title)
-					});
-				}
-			}
-		});
-
-		//搜索列表弹窗UI
-		$('#video-list li .title').each(
-			function () {
-			if (typeof($(this).attr('has_window_btn')) == 'undefined') {
-				$(this).attr('has_window_btn', 'true');
-				var href = $(this).attr('href');
-				var pattern = /\/video\/av(\d+)\//ig;
-				var content = pattern.exec(href);
-				var aid = content ? (content[1]) : '';
-				if (aid != '') {
-					var title = $(this).html();
-					$('#video-list li .title').css('display', 'inline'); //不换行
-					$(this).prepend('<a class="single_player singleplaybtn searchlist" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
-					$(this).find('a').click(function () {
-						single_player(aid, title)
-					});
-				}
-			}
-		});
-		//带缩略图弹窗UI、和侧栏新投稿弹窗UI、首页的推荐栏弹窗、侧栏列表弹窗UI
-		$('.vidbox.v-list li a,.bgm-calendar.bgmbox li a,.rlist li a,.rm-list li a,.r-list li a,.top-list li a').each(
-			function () {
-			if (typeof($(this).attr('has_window_btn')) == 'undefined') {
-				$(this).attr('has_window_btn', 'true');
-				var href = $(this).attr('href');
-				var pattern = /\/video\/av(\d+)\//ig;
-				var content = pattern.exec(href);
-				var aid = content ? (content[1]) : '';
-				if (aid != '') {
-					var title = $(this).find('.t').html();
-					$(this).find('.t').prepend('<a class="single_player singleplaybtn suoluotu" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
-					$(this).find('a').click(function () {
-						single_player(aid, title)
-					});
-				}
-			}
-		});
-		//专题
-		$('.vidbox.zt  .t').each(
-			function () {
-			if (typeof($(this).attr('has_window_btn')) == 'undefined') {
-				$(this).attr('has_window_btn', 'true');
-				var href = typeof($(this).attr('href')) == 'undefined' ? $(this).parent('a').attr('href') : $(this).attr('href');
-				var pattern = /\/video\/av(\d+)\//ig;
-				var content = pattern.exec(href);
-				var aid = content ? (content[1]) : '';
-				//$('.vidbox.zt li a').css('display','inline');//防止A标签换行导致无法点击
-				if (aid != '') {
-					var title = $(this).html();
-					$(this).prepend('<a class="single_player singleplaybtn zttc" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
-					$(this).find('a').click(function () {
-						single_player(aid, title)
-					});
-				}
-			}
-		});
-		//旧版首页分区列表
-		$('.video  li a,.video-wrapper li a').each(
-			function () {
-			if (typeof($(this).attr('has_window_btn')) == 'undefined') {
-				$(this).attr('has_window_btn', 'true');
-				var href = $(this).attr('href');
-				var pattern = /\/video\/av(\d+)\//ig;
-				var content = pattern.exec(href);
-				var aid = content ? (content[1]) : '';
-				if (aid != '') {
-					var title = $(this).find('.t').html();
-					$(this).find('.t').prepend('<a class="single_player singleplaybtn oldlifenqu" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
-					$(this).find('.t a').click(function () {
-						single_player(aid, title)
-					});
-				}
-			}
-		});
-
-		//2016新列表
-		$('.v-list li a').each(
-			function () {
-			if (typeof($(this).attr('has_window_btn')) == 'undefined') {
-				$(this).attr('has_window_btn', 'true');
-				var href = $(this).attr('href');
-				var pattern = /\/video\/av(\d+)\//ig;
-				var content = pattern.exec(href);
-				var aid = content ? (content[1]) : '';
-				if (aid != '') {
-					var title = $(this).find('.t').html();
-					$(this).find('.t').prepend('<a class="single_player singleplaybtn oldlifenqu" href="javascript:void(0);" style="color:white;" data-field="' + aid + '">弹▶</a>');
-					$(this).find('.t a').click(function () {
-						single_player(aid, title)
-					});
-				}
-			}
-		});
-		//弹窗初始化
-	}
-	//弹窗默认的第一P，建立弹窗播放器并建立分P列表===click事件应该在each事件之后执行
-
-	function single_player(aid, title) {
-		$('.player-list').remove(); //移除播放列表
-		window.location.hash = "page=1";
-		var a = '<p id="window_play_title">脚本(｀・ω・´)正在加载中</p><div id="player_content"><div id="bofqi">脚本(｀・ω・´)播放器正在努力加载中....</div></div>';
-		var list_html = '<div id="part_list" class="player-list"><div class="sort"><i>分P列表</i></div><ul id="window_play_list" class="lst unselectable"></ul></div>';
-		var title_html = '<a class="mark_my_video singleplaybtn" href="javascript:void(0);" style="color:white;background:none repeat scroll 0% 0% rgb(0, 182, 228) !important;" data-field="' + aid + '" title="收藏该视频">★Mrak</a>&nbsp;&nbsp;&nbsp;<a class="singleplaybtn" href="http://www.bilibili.com/video/av' + aid + '/" style="color:white;background:none repeat scroll 0% 0% #1E344A!important;" target="_blank" title="前往播放页面">Go</a>&nbsp;&nbsp;&nbsp;<span style="color:#8C8983">' + title.replace('弹▶', '') + '</span>&nbsp;&nbsp;&nbsp;▶<span id="window_play_info"></span>';
-		setTimeout(function () {
-			creat(title_html, a); //创建可视化窗口
-			$('.dialogcontainter').after(list_html);
-			$('#window_play_info').html('正在播放第<span style="color:#DB5140">1P</span>');
-			$('#window_play_title').html('<p><a id="div_positon_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #E54C7E;">固定播放器</a><a id="list_control_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #0CB3EE;">收缩分P列表[在左边]</a><a id="div_fix_letv_button" class="button-small button-flat-action" style="background: none repeat scroll 0% 0% #ED6A4C;">点我专治乐视、搜狐源(乐视源或者搜狐源无法播放的情况请点击)</a>');
-			//切换分P按钮
-			$('#list_control_button').click(function () {
-				var flag = $(".player-list").css("display");
-				if (flag == "none") {
-					$(".player-list").show();
-					$('#list_control_button').html('收缩分P列表');
-					$('#list_control_button').css('background', 'none repeat scroll 0% 0% #0CB3EE');
-				} else {
-					$(".player-list").hide();
-					$('#list_control_button').html('显示分P列表');
-					$('#list_control_button').css('background', 'none repeat scroll 0% 0% #FF2C14');
-				}
-			});
-			//固定播放器按钮
-			$('#div_positon_button').click(function () {
-				var p = $('.dialogcontainter').css('position');
-				if (p == "fixed") {
-					$('.dialogcontainter').css('position', 'absolute');
-					$('.player-list').css('position', 'absolute');
-					$('#div_positon_button').html('浮动播放器');
-					$('#div_positon_button').css('background', 'none repeat scroll 0% 0% #FECD3E');
-				} else {
-					$('.dialogcontainter').css('position', 'fixed');
-					$('.player-list').css('position', 'fixed');
-					$('#div_positon_button').html('固定播放器');
-					$('#div_positon_button').css('background', 'none repeat scroll 0% 0% #E54C7E');
-				}
-			});
-			//专治乐视
-			$('#div_fix_letv_button').click(function () {
-				var aid = $('#div_fix_letv_button').attr('aid');
-				var cid = $('#div_fix_letv_button').attr('cid');
-				$('#player_content #bofqi').html(window_player.fix_letv(aid, cid));
-			});
-			//弹窗播放器收藏功能
-			$('.mark_my_video').click(function () {
-				var aid = $(this).attr('data-field');
-				$.ajax({
-					type : 'POST',
-					url : 'http://www.bilibili.com/m/stow',
-					data : 'dopost=save&aid=' + aid + '&stow_target=stow&ajax=1',
-					success : function (r) {
-						ac_alert('success', '收藏成功！！！！("▔□▔)/', 3000);
-					},
-					error : function (r) {
-						//alert('出错，请重试！');
-						ac_alert('error', '出错，请重试！', 3000);
-					},
-					dataType : 'text'
-				});
-			});
-		}, 0);
-		setTimeout(function () {
-			aid_build_player(aid);
-		}, 0);
-	}
-
-	//END弹窗------------------------------
 
 	//模仿AC娘的消息通知效果
 
@@ -925,17 +608,17 @@ license by bangumi.ga
 	//模仿AC娘的消息通知效果
 	var html = '<div id="notice_area"><div class=" notice_item notice_success" style="display: none">NOTICE-AREA-BASIC-BEGIN</div></div>';
 	$('body').append(html);
-	console.log(aid);
+	//console.log(aid);
 	//播放器的html
 	if (aid == '') {
 		insert_html('', '');
-		if (get_bfp_config('enable_window_player')) {
+/* 		if (get_bfp_config('enable_window_player')) {
 			//ac_alert('info', '弹窗使能初始化...', 3000);
 			window_player_init(); //执行弹窗函数
 			addNodeInsertedListener('.vidbox.v-list li a,.bgm-calendar.bgmbox li a,.rlist li a,.rm-list li a,.r-list li a,.top-list li a,.vidbox.zt  .t,#video-list li a', function () {
 				window_player_init(); //ajax重新渲染,有可能导致浏览器卡顿，若卡顿请删除此行(仅此一行)
 			});
-		}
+		} */
 	} else { //cid=3841639
 		//ac_alert('info', '视频页面使能初始化...', 3000);
 		var content = $('#bofqi').html();
@@ -967,7 +650,10 @@ license by bangumi.ga
 			cid = $('#div_fix_letv_button').attr('cid');
 		}
 		//ac_alert('inverse', 'HTML5弹幕播放', 3000);
-		var url = 'http://interface.bilibili.com/playurl?platform=android&cid=' + cid + '&quality=4&otype=json&appkey=86385cdc024c0f6c&type=mp4';
+		var params='appkey=85eb6835b0a1034e&cid=' + cid + '&otype=json&platform=android&quality=3&type=mp4';
+		var sign=hex_md5(params + '2ad42749773c441109bdc0191257a664');
+		var url = 'http://interface.bilibili.com/playurl?'+params+'&sign='+sign;
+		//console.log(url);
 		GM_xmlhttpRequest({
 			method : 'GET',
 			url : url,
